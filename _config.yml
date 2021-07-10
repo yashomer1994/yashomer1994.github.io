@@ -16,12 +16,6 @@ author:
   twitter: yash_omer # twitter username
   email: yashomer0007@gmail.com # email adress
 
-# URL settings
-#url: "https://powex.ml" #
-#baseurl: "/Gesko" # leave blank if not wishd
-#permalink: "https://powex.ml/Gesko/"
-#permalink: pretty 
-
 
 markdown: kramdown
 kramdown:
