@@ -35,20 +35,20 @@ It calls “ZwQuerySystemInformation” with user arguments such as -> **InfoTyp
 
 After command execution , it will list the loaded drivers with there memory addresses in kernel mode.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/1.png)
+![](https://yashomer1994.github.io/assets/afd/1.png)
 
 We identified the Entry of "**ntoskrnl.exe**" or "**ntkrnlpa**" in the list the memory is loaded in the kernel space from "**“_SYSTEM_MODULE_INFORMATION**".
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/2.png)
+![](https://yashomer1994.github.io/assets/afd/2.png)
 
 
 **LoadLibrary()** will Load the module in user mode and start searching for the address of "**HalfDispatchTable**".
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/3.png)
+![](https://yashomer1994.github.io/assets/afd/3.png)
 
 Instructions are used to get the “**HalDispatchTable +4**” in module “ntkrnlpa.exe” in kernel space.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/4.png)
+![](https://yashomer1994.github.io/assets/afd/4.png)
 
 ---
  [](#header-4)**Exploit**
@@ -68,7 +68,7 @@ Code is used to Perform the Hook:
 
     /* Above instructions used to inject instructions in to the address space of NtDeviceIoControlFile */
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/5.png)
+![](https://yashomer1994.github.io/assets/afd/5.png)
 
 
     PUSH <zero.loc_401640>
@@ -118,7 +118,7 @@ The driver writes location to (0x8053513c) -> HalfDispatchTable + $4) with the v
 
 Once is hook successfully overwrites the memory to 0, NtDeviceIoControlFile is removed.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/6.png)
+![](https://yashomer1994.github.io/assets/afd/6.png)
 
 Final Step of Exploitation To call the API “**ntdll.ZwQueryIntervalProfile**".
 
@@ -129,20 +129,20 @@ As mentioned earlier the value of HalfDispatchTable+$4 is now 0 stored after cal
         New Pointer PTR:
         CALL 0x0000000
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/7.png)
+![](https://yashomer1994.github.io/assets/afd/7.png)
 
 The shellcode is copied to the location of 0x00000000 gets executed.
 
 API CALL “**NtDeviceIoControlFile**” will lead to arbitrary memory overwrite which will lead to Privilege Escalation.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/8.png)
+![](https://yashomer1994.github.io/assets/afd/8.png)
 
 
 ---
  [](#header-5)**Proof Of Concept**
 ---
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/afd/9.png)
+![](https://yashomer1994.github.io/assets/afd/9.png)
 
 
 

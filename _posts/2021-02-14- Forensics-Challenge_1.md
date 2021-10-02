@@ -18,7 +18,7 @@ My sister's computer crashed. We were very fortunate to recover this memory dump
 
 We will first analyse the sample snapshot using the tool.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/info.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/info.png)
 
 Seems like it is Windows 7 machine.
 
@@ -30,7 +30,7 @@ Major Points to analysed in this :
 2. Commands Executed.
 3. Terminated Processes.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/ps.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/ps.png)
 
 We can see some interesting proccesses running such as :
 
@@ -46,13 +46,13 @@ We can see some interesting proccesses running such as :
 
 We will analyse the **cmd.exe** proccesses to read the commands used and their outputs.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/cmd.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/cmd.png)
 
 As shown the stdout throws some string "**ZmxhZ3t0aDFzXzFzX3RoM18xc3Rfc3Q0ZzMhIX0=**" encoded.
 
 We tried to decode the following string.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/flag1.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/flag1.png)
 
 We have retreived Our **First Flag**.
 
@@ -65,7 +65,7 @@ Flag-1 : **flag{th1s_1s_th3_1st_st4g3!!}**
 
 So this was new for me , it’s possible to reconstruct the image shown in Paint from the memory dump using a 1337 hacker tool called gimp.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/paint.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/paint.png)
 
 Just Flip and mirror the image get second flag.
 
@@ -78,17 +78,17 @@ Flag : **flag{Good_Boy_good_girl}**
 
 Our Third Process is **WinRar.exe** which we are going to analyse in this section,  we will scan memory dump for archive files 
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/winrar.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/winrar.png)
 
 We can see some "**IMPORTANT.rar**" seems to be important, now we will try to extract them using there offset.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/imp.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/imp.png)
 
 Inside the **rar** file which is password protected.
 
 We will try to Dump the **NTLM hashes** 
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/ntlm.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/ntlm.png)
 
 We will use **NTLM hashes**  as password to extract the **IMPORTANT.rar**.
 
@@ -96,7 +96,7 @@ We will use **NTLM hashes**  as password to extract the **IMPORTANT.rar**.
 
 The flag can be found after decrypting file.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge1/flag3.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge1/flag3.png)
 
 So we have found our third Flag as shown.
 

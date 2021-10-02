@@ -30,7 +30,7 @@ We will thing we will use the **PROFILE** to determine the Image specifics.
 
 The **Profile** Tells about the OS of the image from which machine the dump data was extracted.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/imageinfo.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/imageinfo.png)
 
 Volatility framework provides the details about of image, which profile to be used.
 
@@ -43,7 +43,7 @@ As a Security Researcher, Following specifications are analysed before going any
 
 So , to list the current running processes, we will use the following command as shown in image below.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/process.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/process.png)
 
 We can see the list of processes which were running when the memory dump was carried out. Output of the command gives a fully formatted view which includes the name, PID, PPID, Threads, Handles, start time.
 
@@ -53,25 +53,25 @@ In the output , there are process which needs to analysed.
 2. DumpIt.exe :- This is tool which was used to dump the memory.
 3. explorer.exe :- This process handles File Explorer.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/process1.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/process1.png)
 
 As we can **CMD.exe** process was running, lets analyse what commands have been executed.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/cmd.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/cmd.png)
 
 As we can see the executed command : **C:\Python27\python.exe C:\Users\hello\Desktop\demon.py.txt**
 
 Let's see what output we recieved from **stdout**
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/hello.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/hello.png)
 
 As highlighted above, stdout throws some string "**335d366f5d6031767631707f**" which is in hex encoded format , on decoding the string we found something as shown .
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/hex.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/hex.png)
 
 Now, we will try to analyse the system environment variable path set.
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/xor.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/xor.png)
 
 Till now we have found some interesting stuff related to the Flag.
 
@@ -81,7 +81,7 @@ Till now we have found some interesting stuff related to the Flag.
 
 Now we will try to extract the NTLM Hash of the system as shown
 
-![](https://yashomer1994.github.io/yash007.github.io/assets/forensics/challenge0/ntlm.png)
+![](https://yashomer1994.github.io/assets/forensics/challenge0/ntlm.png)
 
 Using the online NTLM hash crack tool we can retrive the Flag.
 
