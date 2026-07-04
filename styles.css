@@ -265,6 +265,39 @@ figure.shot img {
   height: auto;
 }
 
+/* Migrated legacy posts */
+.post-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--img-border);
+}
+
+.post-body h2 {
+  margin: 1.75rem 0 0.75rem;
+}
+
+.post-body pre {
+  margin: 0 0 1rem;
+}
+
+.post-body ul,
+.post-body ol {
+  padding-left: 1.2rem;
+  margin: 0 0 1rem;
+}
+
+.post-body li {
+  margin-bottom: 0.35rem;
+}
+
+.post-body hr {
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  margin: 1.5rem 0;
+}
+
 figure.shot figcaption {
   padding: 0.4rem 0.6rem;
   font-size: 0.8rem;

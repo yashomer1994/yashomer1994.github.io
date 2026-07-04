@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Windows Stack Buffer Overflow — Yash Omer</title>
+  <meta name="description" content="Windows Stack Buffer Overflow" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">January 11, 2021 · C C++ Asssembly</p>
+      <h1>Windows Stack Buffer Overflow</h1>
+
+      <div class="post-body">
+<p>Buffers are basically the memory area which holds data that is being transferred from one memory area to other. Buffer overflow occurs when a process to write a data in a memory which is not available or the memory is exceeded.</p>
+<h2>Pre-Requisite</h2>
+<p>For this Exploit I have used Windows Server 2008 r2 SP1 - 32 Bit with  VulnServer Application alongside Immunity Debugger and Ollydbg.</p>
+<p>VulnServer :  Windows Server Application which has number of vulnerabilities which designed to be target application for research and practice fuzzing.</p>
+<p>Windows Firewall : Disabled.</p>
+<p>Data Execution Prevention (DEP): Essential Services.</p>
+<h2>Attack</h2>
+<p>I have tried to trigger an Exception in Application by sending Large Chunk of strings with TRUN command. For the demo i will be using Perl Script for this attack which runs on Local Host</p>
+<p><img alt="" src="../assets/Picture%201.png" /></p>
+<p>Once we run the Program , the debugger stops the program with <strong>Access Violation Error</strong> as shown on the bottom of screen, and the program execution will be paused in debugger.</p>
+<p><img alt="" src="../assets/Picture%202.png" /></p>
+<p>Before moving further, we need to check the requirements to be met which will allow us to do Buffer overflow.</p>
+<ul>
+<li>Controling EIP registers, which decides next code to be executed by CPU.</li>
+<li>Indetify the memory address in the code , where we can put our code, which will redirect EIP towards our vulnerable code.</li>
+</ul>
+<hr />
+<p><strong>Naming Conventions</strong></p>
+<p><strong>EAX</strong> - Accumulator Register</p>
+<p>This is a general purpose register used for the calculations such as addition and subtraction. It is more efficient for writing exploit shellcode as it has the feature to store the return value of function.</p>
+<p>EAX register is a 32 Bit Register, AX refers to the 16 bit registers, which can be further divided as AH of 8 bits.</p>
+<p><strong>EBX</strong> - Base Register</p>
+<p>It is used as Base Pointer for memory access. It might not have any specific use, but it is used often to set value 0 in function to speed up the calculations.</p>
+<p><strong>ECX</strong> - Counter Register</p>
+<p>Counter register is used as a LOOP Operation. Each Time LOOP Instruction is Executed, the counter register is decremented, then checked for 0. If the LOOP is 0 the loop will be terminated and execution of a program continues with the instruction following the LOOP instructions. If count is non zero, it will remain in LOOP and execute the instructions.</p>
+<p><strong>EDX</strong> - Data Register</p>
+<p>It is a volatile general-purpose register which is used as function parameter.</p>
+<p><strong>ESI</strong> - Source Index</p>
+<p>This register used to stroe a pointer to store to a read location.</p>
+<p><strong>EDI</strong> - Destination Index</p>
+<p>EDI is  to store the storage pointers of functions, such as the write address of a string operation.</p>
+<p><strong>EBP</strong> - Base Pointer</p>
+<p>EBP is used to store  of the base address  of the stack.  It is often used to reference variables located on the stack by using an offset to the current value of EBP.</p>
+<p><strong>ESP</strong> - Stack Pointer</p>
+<p>ESP is used to store  the current memory address  of the stack. As registers are pushed or  poped  the stack ESP increments/decrements accordingly.</p>
+<p><strong>EIP</strong> - Instrcuction Pointer</p>
+<p>EIP points to the memory address of the next instruction to be executed by the CPU.</p>
+<hr />
+<p>The Value of EIP as shown in stack pane is populated wtih 41 bytes, and the ASCII equivalent of 41 is "A", which we have used in our script, this indicates the EIP register is controllable.</p>
+<p><img alt="" src="../assets/Picture%203.png" /></p>
+<p>We will start analysing the location of Instructions exception using debugger by setting breakpoint</p>
+<p><img alt="" src="../assets/Picture%204.png" /></p>
+<p>Restart the program execution, this time program execution will be paused on Breakpoint which we have set earlier.</p>
+<p><img alt="" src="../assets/Picture%205.png" /></p>
+<p>RETN instruction was executed before the exception occured.The RETN instructions stores the top value from the stack, interprets the value as a<br />
+memory address and directs it to the EIP.</p>
+<p>RETN instruction is used to return back to the previous point in the execution after making a <strong>CALL</strong> statement, which places the address of the following instruction in memory onto the stack before it runs.Since the RETN statment is pulling an invalid value of 41414141 off the stack, the valid memory placed onto the stack by matching CALL statement been overwritten during execution of intermediary instructions. This is because an invalid memory address will not be placed onto the stack by a CALLL instruction, and a properly working proram will not allow a RETN  instruction to run with an invalid address on the stack. </p>
+<p>Setting a New breakpoint at the CALL instruction :</p>
+<p><img alt="" src="../assets/Picture%206.png" /></p>
+<p>Restart the program execution and the execution will pause at the new breakpoint address</p>
+<p><img alt="" src="../assets/Picture%207.png" /></p>
+<p>Instructions will place address of next instruction in memory on stack and redirect to the CALL instruction.</p>
+<p>Address on the stack which stores our return address value is 191f9DC.</p>
+<p><img alt="" src="../assets/Picture%208.png" /></p>
+<p>Stepping the Instructions three times, instruction is pushed to the current value of EBP on the stack, and copy the current value of ESP register into EBP register, and subtract 7E8 from the ESP register. </p>
+<p>00401811 |. 8B45 08 MOV EAX,DWORD PTR SS:[EBP+8]<br />
+00401814 |. 894424 04 MOV DWORD PTR SS:[ESP+4],EAX<br />
+00401818 |. 8D85 28F8FFFF LEA EAX,DWORD PTR SS:[EBP-7D8]<br />
+0040181E |. 890424 MOV DWORD PTR SS:[ESP],EAX</p>
+<p>Stack will be filled with lots of zeroes as shown in figure below , which was earlier used by other program functions.</p>
+<p><img alt="" src="../assets/Picture%209.png" /></p>
+<p>So the second entry on stack we found, interpreted as source operand, is a pointer to pointing to another location in  memory which contains string “TRUN.AAAAA”, data which we sent to the application using our script.</p>
+<p>We have found the destination address to our pre-allocated memory on the stack. The <strong>STRCPY</strong> function will copy the data from one memory location to another memory location in the stack.</p>
+<p><img alt="" src="../assets/Picture%2010.png" /></p>
+<p>00401826 |. C9 LEAVE</p>
+<p>The <strong>LEAVE</strong> instruction copies the value in the EBP register to the ESP register, and also takes the current value on the stack and uses it to set the EBP register. </p>
+<p><img alt="" src="../assets/Picture%2011.png" /></p>
+<p>We changed the value “A” with the shellcode , in the figure below the “A” character is overwritten by a different value as in EIP register.</p>
+<p><img alt="" src="../assets/Picture%2012.png" /></p>
+<p>We were able to Control the value of EIP by changing the string "A" with modified shellcode as shown </p>
+<p><img alt="" src="../assets/Picture%2013.png" /></p>
+<p>Once we are able to control the EIP register with our modified shellcode we will try to exploit Arbitrary Code Execution.</p>
+<p><strong>Bypass ASLR</strong></p>
+<p>We have controlled EIP register , by which we are able to  Bypass the Windows kernel Memory Protection, by injecting a DLL file.</p>
+<p><img alt="" src="../assets/Picture%2014.png" /></p>
+<p>As we  managed retrieve the memory location of our DLL</p>
+<p><img alt="" src="../assets/Picture%2015.png" /></p>
+<p>We used Base Address of the DLL to inject vulnerable code.</p>
+<p><img alt="" src="../assets/Picture%2016.png" /></p>
+<p>We were able to successfully exploit SEH base Code Execution .</p>
+<p><img alt="" src="../assets/Picture%2017.png" /></p>
+<p><strong>References</strong></p>
+<p><a href="https://www.redscan.com/news/windows-buffer-overflow-attacks-pt-1/">https://www.redscan.com/news/windows-buffer-overflow-attacks-pt-1/</a><br />
+<a href="https://resources.infosecinstitute.com/topic/stack-based-buffer-overflow-tutorial-part-1-introduction/">https://resources.infosecinstitute.com/topic/stack-based-buffer-overflow-tutorial-part-1-introduction/</a></p>
+      </div>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>

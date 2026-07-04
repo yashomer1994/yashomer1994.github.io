@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Android Hidden API Restrictions — Yash Omer</title>
+  <meta name="description" content="Android Hidden API Restrictions" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">April 11, 2021 · Android, Java</p>
+      <h1>Android Hidden API Restrictions</h1>
+
+      <div class="post-body">
+<p>In 2018 Android release new version Android R introducing some <strong>Hidden APIs</strong> in the android ecosystem , with limited access for developers are trying to bypass the restriction.</p>
+<h2>Policies</h2>
+<p>Android has imposed system API Restriction which restricts application from accessing the system API, and try to abuse as per requirement. </p>
+<p>Example : Method through reflection is Java Layer "<strong>Class.getMethod/getDeclaredMethod</strong>".</p>
+<p>Method Implementation : </p>
+<pre><code> static jobject Class_getDeclaredMethodInternal(JNIEnv* env, jobject javaThis, jstring name, jobjectA rray args) {
+</code></pre>
+<p>// Omit irrelevant code...<br />
+    handle<mirror::Method> result = hs.NewHandle(<br />
+    mirror::Class::GetDeclaredMethodInternal<kRuntimePointerSize>(<br />
+    soa.Self(),<br />
+    Klass,<br />
+    soa.Decode<mirror::String> (name),<br />
+    soa.Decode<mirror::ObjectArray\<mirror::Class>>(args),<br />
+    GetHiddenapiAccessContextFunction(soa.Self()));<br />
+    if (result == nullptr || ShouldDenyAccessToMember(result-&gt;GetArtMethod(), soa.Self())) {<br />
+     Return nullptr;<br />
+    }<br />
+      return soa.AddLocalReference<jobject>(result.Get());<br />
+    }</p>
+<hr />
+<p>Going through code , if <strong>ShouldDenyAccessToMember</strong> returns value as true, the value returned is null and the uppeer layer will throw an exception that the method doesn't exist. </p>
+<p>To call <strong>ShouldDenyAccessToMember</strong> we use <strong>hiddenapi::ShouldDenyAccessToMembe</strong>, as shown below :</p>
+<pre><code>    template&lt;typename T&gt;
+Inline bool shouldDenyAccessToMember(T* member,
+                                 const std::function&lt;AccessContext()&gt;&amp; fn_get_access_context,
+AccessMethod access_method)
+REQUIRES_SHARED(Locks::mutator_lock_) {
+
+const uint32_t runtime_flags = GetRuntimeFlags(member);
+
+// 1: If the member is a public API, directly through
+if ((runtime_flags &amp; kAccPublicApi) ! = 0) {
+Return false;
+}
+
+  // 2: Not a public API (i.e., a hidden API), to get the Domain of the caller and the accessed member
+  // Because obtaining the caller needs to trace back to the call stack, the performance is very poor, so try to avoid this consumption.
+  const AccessContext caller_context = fn_get_access_context();
+  const AccessContext callee_context(member-&gt;GetDeclaringClass());
+
+  // 3: If the caller is trusted, return directly
+  if (caller_context.CanAlwaysAccess(callee_context)) {
+    Return false;
+}
+
+  // 4: Untrusted caller tries to access the hidden API and determines behavior according to the caller's Domain
+  switch (caller_context.GetDomain()) {
+    case Domain::kApplication: {
+DCKCK(! callee_context.IsApplicationDomain());
+
+  // If access checking is completely disabled, then return directly
+  EnforcementPolicy policy = Runtime::Current()-&gt;GetHiddenApiEnforcementPolicy();
+  if (policy == EnforcementPolicy::kDisabled) {
+    Return false;
+}
+
+  // 5: Call detail::ShouldDenyAccessToMemberImpl to decide if access is required.
+  return detail::ShouldDenyAccessToMemberImpl(member, api_list, access_method);
+}
+// Omit
+}
+</code></pre>
+<hr />
+<hr />
+<p><strong>Analysis</strong></p>
+<hr />
+<p>Here i will try to explain and analyse the above code step by step.</p>
+<pre><code>1. Validate the target memeber is a Public API, if check got passed it  will acquired by "**GetRunTimeFlags**" , this flag is stored in  the member **access_flags**.
+
+2. Store caller domain, validate it and pass it .
+
+3. If conditions doesn't met as above,  The domain used in the code is **kApplications**, which will be looked first.
+</code></pre>
+<h2>---</h2>
+<p><strong>GetCaller</strong> :</p>
+<h2>---</h2>
+<pre><code> bool VisitFrame() override REQUIRES_SHARED(Locks::mutator_lock_) {
+   ArtMethod *m = GetMethod();
+    if (m == nullptr) {
+    // Attached native thread. Assume this is *not* boot class path.
+caller = nullptr;
+    Return false;
+} else if (m-&gt;IsRuntimeMethod()) {
+    // Skip the internal method of ART Runtime
+    Return true;
+}
+
+ObjPtr&lt;mirror::Class&gt; declaring_class = m-&gt;GetDeclaringClass();
+if (declaring_class-&gt;IsBootStrapClassLoaded()) {
+    // Skip the internal method in java.lang.Class
+    if (declaring_class-&gt;IsClassClass()) {
+        Return true;
+}
+
+    // Skip java.lang.invoke. *
+ObjPtr&lt;mirror::Class&gt; lookup_class = GetClassRoot&lt;mirror::MethodHandlesLookup&gt;();
+    if ((declaring_class == lookup_class || declaring_class-&gt;IsInSamePackage(lookup_class))
+&amp;&amp;! m-&gt;IsClassInitializer()) {
+        Return true;
+}
+
+    // Skip from java.lang.reflect if PREVENT_META_REFLECTION_BLACKLIST_ACCESS is Enabled. * Visit
+    // The key to the system's restriction on "set baby reflection" is here.
+ObjPtr&lt;mirror::Class&gt; proxy_class = GetClassRoot&lt;mirror::Proxy&gt;();
+    if (declaring_class-&gt;IsInSamePackage(proxy_class) &amp;&amp; declaring_class ! = proxy_class) {
+        if (Runtime::Current()-&gt;isChangeEnabled(kPreventMetaReflectionBlacklistAccess)) {
+            Return true;
+}
+}
+}
+
+Caller = m;
+Return false;
+}
+</code></pre>
+<hr />
+<h2>Domain According to Caller</h2>
+<hr />
+<pre><code>static Domain ComputeDomain(ObjPtr&lt;mirror::ClassLoader&gt; class_loader, const DexFile* dex_file) {
+if (dex_file == nullptr) {
+    // dex_file == nullptr &amp;&amp; class_loader == nullptr (i.e., the class loaded by BootClassLoader), then trusted
+    return ComputeDomain(/* is_trusted= */ class_loader.IsNull());
+}
+   // Get the Domain of dex_file
+return dex_file-&gt;GetHiddenapiDomain();
+}
+
+static Domain ComputeDomain(ObjPtr&lt;mirror::Class&gt; klass, const DexFile* dex_file)
+REQUIRES_SHARED(Locks::mutator_lock_) {
+
+Domain Domain = ComputeDomain(klass-&gt;GetClassLoader(), dex_file);
+
+if (domain == Domain::kApplication &amp;&amp; klass-&gt;ShouldSkipHiddenApiChecks() &amp;&amp; Runtime::Current()-&gt;IsJa vaDebuggable()) {
+    // Under debug mode, developers can actively specify certain types of trust for debugging.
+domain = ComputeDomain(/* is_trusted= */ true);
+}
+
+Return domain;
+}
+</code></pre>
+<h2>---</h2>
+<p>When the class is loaded first time, it initalises <strong>dex_files</strong> :</p>
+<pre><code>static Domain DetermineDomainFromLocation(const std::string&amp; dex_location,
+ObjPtr&lt;mirror::ClassLoader&gt; class_loader) {
+
+if (ArtModuleRootDistinctFromAndroidRoot()) {
+    // Within several core apex modules
+    if (LocationIsOnArtModule(dex_location.c_str())
+|| LocationIsOnConscryptModule(dex_location.c_str())
+|| LocationIsOnI18nModule(dex_location.c_str())) {
+        return Domain::kCorePlatform;
+}
+
+    // Under apex but not the core module
+    if (LocationIsOnApex(dex_location.c_str())) {
+        return Domain::kPlatform;
+}
+}
+
+// Under /system/framework/
+if (LocationIsOnSystemFramework(dex_location.c_str())) {
+    return Domain::kPlatform;
+}
+
+// Under /system/ext/framework/
+if (LocationIsOnSystemExtFramework(dex_location.c_str())) {
+    return Domain::kPlatform;
+}
+
+// ClassLoader is null (i.e. BootClassLoader)
+if (class_loader.IsNull()) {
+LOG(WARNING) &lt;&lt; "DexFile" &lt;&lt; dex_location &lt;&lt;" is in boot class path, but not in a known Location";
+    return Domain::kPlatform;
+}
+
+  return Domain::kApplication;
+}
+</code></pre>
+<h2>---</h2>
+<p>Three domains are subdivided in Android Q: kCorePlatform, kPlatform, and kApplication.</p>
+<p>Let's analyze some of the restrictions on kPlatform and kCorePlatform ::</p>
+<pre><code>    case Domain::kPlatform: {
+    DCHECK(callee_context.GetDomain() == Domain::kCorePlatform);
+
+  // If it is the Core Platform API that needs to be exposed, through
+  if ((runtime_flags &amp; kAccCorePlatformApi) ! = 0) {
+    Return false;
+    }
+
+  // Close the access restriction completely, through
+  // The default in Android Q is off, and it is unknown in R.
+    EnforcementPolicy policy = Runtime::Current()-&gt;GetCorePlatformApiEnforcementPolicy();
+  if (policy == EnforcementPolicy::kDisabled) {
+    Return false;
+    }
+
+  return details::HandleCorePlatformApiViolation(member, caller_context, access_method, policy);
+    }
+</code></pre>
+<h2>---</h2>
+<p>As per Android Devloper Blogs, this feature disabled in Android Q, and not known in R.</p>
+<hr />
+<h2>Focus</h2>
+<hr />
+<p>Application core accessing system <strong>API</strong>.</p>
+<pre><code>        template&lt;typename T&gt;
+  bool ShouldDenyAccessToMemberImpl(T* member, ApiList api_list, AccessMethod access_method) {
+  Runtime* runtime = Runtime::Current();
+
+  EnforcementPolicy hiddenApiPolicy = runtime-&gt;GetHiddenApiEnforcementPolicy();
+
+ MemberSignature member_signature (member);
+
+ // There is an exemption list inside the ART, if matched, through
+if (member_signature.DoesPrefixMatchAny(runtime-&gt;GetHiddenApiExemptions())) {
+MaybeUpdateAccessFlags (runtime, member, kAccPublicApi);
+Return false;
+}
+
+  bool deny_access = false;
+
+EnforcementPolicy testApiPolicy = runtime-&gt;GetTestApiEnforcementPolicy();
+  // Not handled if hiddenApiPolicy == EnforcementPolicy::kJustWarn (EnforcementPolicy has only three states)
+  if (hiddenApiPolicy == EnforcementPolicy::kEnabled) {
+    if (testApiPolicy == EnforcementPolicy::kDisabled &amp;&amp; api_list.IsTestApi()) {
+      // Special handling of test APIs (i.e., APIs with @TestApi annotations) within ART
+deny_access = false;
+} else {
+      // Compare SdkVersion to decide if you need to deny access
+      // The so-called gray list/blacklist is realized here.
+      switch (api_list.GetMaxAllowedSdkVersion()) {
+        case SdkVersion::kP:
+deny_access = runtime-&gt;isChangeEnabled(kHideMaxtargetsdkPHiddenApis);
+          Break;
+        case SdkVersion::kQ:
+deny_access = runtime-&gt;isChangeEnabled(kHideMaxtargetsdkQHiddenApis);
+          Break;
+        Default:
+deny_access = IsSdkVersionSetAndMoreThan(runtime-&gt;GetTargetSdkVersion(), api_list.GetMaxAl lowedSdkVersion());
+}
+}
+}
+
+  If (access_method ! = AccessMethod::kNone) {
+    // Omit code: issue a warning about accessing the hidden API
+
+    // If this access is not denied, move the member to the whitelist and skip
+        // The next time to be accessed by the member in the warning.
+    If (! deny_access) {
+MaybeUpdateAccessFlags (runtime, member, kAccPublicApi);
+}
+}
+
+  return deny_access;
+}
+</code></pre>
+<h2>Summary</h2>
+<p>This blog is to explain the Restrictions imposed on API , in the next blog i will explain the bypass Technique.</p>
+<h2>References</h2>
+<ol>
+<li>
+<p><a href="https://github.com/LSPosed/AndroidHiddenApiBypass">https://github.com/LSPosed/AndroidHiddenApiBypass</a>.</p>
+</li>
+<li>
+<p><a href="https://github.com/anggrayudi/android-hidden-api">https://github.com/anggrayudi/android-hidden-api</a></p>
+</li>
+</ol>
+      </div>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>

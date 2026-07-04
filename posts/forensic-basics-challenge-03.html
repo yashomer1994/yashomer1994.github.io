@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forensic-Challenge-03 Evil&#x27;s den — Yash Omer</title>
+  <meta name="description" content="Forensic-Challenge-03 Evil&#x27;s den" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">March 3, 2021 · Asssembly Python JPEG</p>
+      <h1>Forensic-Challenge-03 Evil&#x27;s den</h1>
+
+      <div class="post-body">
+<p>This is the third blog of forensic series, in which we will try to extract the information from the image .</p>
+<h2>Challenge Description</h2>
+<p>A malicious script encrypted a very secret piece of information I had on my system. Can you recover the information for me please?</p>
+<p>Note-1: This challenge is composed of only 1 flag. The flag split into 2 parts.</p>
+<p>Note-2: You'll need the first half of the flag to get the second.</p>
+<h2>Analysis</h2>
+<p>We will start by analysing the Raw image file which we got for this challenge.</p>
+<p><img alt="" src="../assets/forensics/challenge3/image.png" /></p>
+<p>This image is dump of Windows 7 , as we have seen in our earlier blogs.</p>
+<p>Now we will analyse the recently services used or files before this dump was created.</p>
+<ol>
+<li>Recent Active Processes.</li>
+<li>Commands executed successfully.</li>
+<li>Terminated Processes.</li>
+</ol>
+<p><img alt="" src="../assets/forensics/challenge3/note.png" /></p>
+<p>Process list shows <strong>notepad.exe</strong> process was mostly used.</p>
+<p>Using <strong>cmdline</strong> plugin , to check which files were opened.</p>
+<p><img alt="" src="../assets/forensics/challenge3/cmd.png" /></p>
+<p>We saw some interesting files were written such as <strong>evil.py</strong> and <strong>vip.txt</strong>.</p>
+<p>To take a closer look of files written we just extract those to an text file.</p>
+<p><img alt="" src="../assets/forensics/challenge3/filescan.png" /></p>
+<p>Using offsets found earlier we will dump the file to analyse.</p>
+<p><img alt="" src="../assets/forensics/challenge3/evil.png" /></p>
+<p>Python Script Mechanism :</p>
+<ol>
+<li>User input String as a Command-Line Argument.</li>
+<li>Breaks the string into characters and <strong>XOR</strong> to each character to 3.</li>
+<li>Encode the <strong>XOR</strong> to <strong>Base64</strong>.</li>
+<li>Writes the Base64 Encoded data to <strong>vip.txt</strong>.</li>
+</ol>
+<p><img alt="" src="../assets/forensics/challenge3/vip.png" /></p>
+<p>Using online tool we will try to decrypt the <strong>Base64</strong> Encoded <strong>XOR</strong> to reverse the steps.</p>
+<p><img alt="" src="../assets/forensics/challenge3/chef.png" /></p>
+<h2>FLAG - 01 : inctf{0n3_h4lf</h2>
+<p>Filescan Output , gives some common file format but we can see something <strong>suspicious</strong>.</p>
+<p><img alt="" src="../assets/forensics/challenge3/suspicious.png" /></p>
+<p>Using the offset we tried to dump the following file for better analysis.</p>
+<p><img alt="" src="../assets/forensics/challenge3/secret.png" /></p>
+<p><strong>Extracted Output:</strong></p>
+<p><img alt="" src="../assets/forensics/challenge3/1.png" /></p>
+<p>We try to find the hidden information from the extracted image.</p>
+<p><img alt="" src="../assets/forensics/challenge3/steg.png" /></p>
+<p>So we found our second flag.</p>
+<h2>FLAG - 02 : _1s_n0t_3n0ugh}</h2>
+<p>Appending the two Flags together we will get our Final Flag.</p>
+<p><strong>FINAL-FLAG: inctf{0n3_h4lf_1s_n0t_3n0ugh}</strong></p>
+      </div>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>

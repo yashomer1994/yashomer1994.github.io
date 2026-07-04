@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forensic-Challenge-1_Beginner&#x27;s Luck — Yash Omer</title>
+  <meta name="description" content="Forensic-Challenge-1_Beginner&#x27;s Luck" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">February 14, 2021 · C C++ Asssembly Python</p>
+      <h1>Forensic-Challenge-1_Beginner&#x27;s Luck</h1>
+
+      <div class="post-body">
+<p>This is Second Blog of  Memory Forensic series.</p>
+<h2>Challenge Description</h2>
+<p>My sister's computer crashed. We were very fortunate to recover this memory dump. Your job is get all her important files from the system. From what we remember, we suddenly saw a black window pop up with some thing being executed. When the crash happened, she was trying to draw something. Thats all we remember from the time of crash.</p>
+<hr />
+<h2>Analysis_Stage 0</h2>
+<p>We will first analyse the sample snapshot using the tool.</p>
+<p><img alt="" src="../assets/forensics/challenge1/info.png" /></p>
+<p>Seems like it is Windows 7 machine.</p>
+<p>Next we will list down Processes running during the time of memory dump.</p>
+<p>Major Points to analysed in this :</p>
+<ol>
+<li>Active Processes.</li>
+<li>Commands Executed.</li>
+<li>Terminated Processes.</li>
+</ol>
+<p><img alt="" src="../assets/forensics/challenge1/ps.png" /></p>
+<p>We can see some interesting proccesses running such as :</p>
+<ol>
+<li>cmd.exe :- This process executes Command Prompt.We can analyse this process to which commands have been executed.</li>
+<li>mspaint.exe :- This process executes mspaint. We can analyse this process sensitive blue print.</li>
+<li>WinRar.exe :- It can create and view archives in RAR or ZIP file formats, and unpack numerous archive file formats.</li>
+</ol>
+<hr />
+<h2>Analysis_Stage 1</h2>
+<p>We will analyse the <strong>cmd.exe</strong> proccesses to read the commands used and their outputs.</p>
+<p><img alt="" src="../assets/forensics/challenge1/cmd.png" /></p>
+<p>As shown the stdout throws some string "<strong>ZmxhZ3t0aDFzXzFzX3RoM18xc3Rfc3Q0ZzMhIX0=</strong>" encoded.</p>
+<p>We tried to decode the following string.</p>
+<p><img alt="" src="../assets/forensics/challenge1/flag1.png" /></p>
+<p>We have retreived Our <strong>First Flag</strong>.</p>
+<p>Flag-1 : <strong>flag{th1s_1s_th3_1st_st4g3!!}</strong></p>
+<hr />
+<h2>Analysis_Stage 2</h2>
+<p>So this was new for me , it’s possible to reconstruct the image shown in Paint from the memory dump using a 1337 hacker tool called gimp.</p>
+<p><img alt="" src="../assets/forensics/challenge1/paint.png" /></p>
+<p>Just Flip and mirror the image get second flag.</p>
+<p>Flag : <strong>flag{Good_Boy_good_girl}</strong></p>
+<hr />
+<h2>Analysis_Stage3</h2>
+<p>Our Third Process is <strong>WinRar.exe</strong> which we are going to analyse in this section,  we will scan memory dump for archive files </p>
+<p><img alt="" src="../assets/forensics/challenge1/winrar.png" /></p>
+<p>We can see some "<strong>IMPORTANT.rar</strong>" seems to be important, now we will try to extract them using there offset.</p>
+<p><img alt="" src="../assets/forensics/challenge1/imp.png" /></p>
+<p>Inside the <strong>rar</strong> file which is password protected.</p>
+<p>We will try to Dump the <strong>NTLM hashes</strong> </p>
+<p><img alt="" src="../assets/forensics/challenge1/ntlm.png" /></p>
+<p>We will use <strong>NTLM hashes</strong>  as password to extract the <strong>IMPORTANT.rar</strong>.</p>
+<p><strong>NTLM Hash : F4FF64C8BAAC57D22F22EDC681055BA6</strong></p>
+<p>The flag can be found after decrypting file.</p>
+<p><img alt="" src="../assets/forensics/challenge1/flag3.png" /></p>
+<p>So we have found our third Flag as shown.</p>
+      </div>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>
