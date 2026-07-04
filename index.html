@@ -29,44 +29,28 @@
       </header>
       <hr class="header-rule" />
 
-      <h1>Yash Omer</h1>
-      <p class="bio">
-        Senior Domain Manager – Cyber Security | AI Security.
-        Research notes on AppSec, offensive security, and AI/ML security.
-        No lab spoilers.
-      </p>
+      <section class="whoami" id="whoami" aria-label="whoami">
+        <button type="button" class="whoami-run" id="whoami-run" aria-expanded="false" aria-controls="whoami-profile">
+          <span class="whoami-prompt">$</span>
+          <span class="whoami-cmd">whoami</span>
+          <span class="whoami-hint" id="whoami-hint">click</span>
+        </button>
 
-      <div
-        class="term"
-        id="whoami-term"
-        role="button"
-        tabindex="0"
-        aria-label="Run whoami in terminal"
-      >
-        <div class="term-chrome" aria-hidden="true">
-          <span class="term-dot term-dot-red"></span>
-          <span class="term-dot term-dot-yellow"></span>
-          <span class="term-dot term-dot-green"></span>
-          <span class="term-title">whoami</span>
-        </div>
-        <div class="term-body">
-          <p class="term-line">
-            <span class="term-prompt">$</span>
-            <span class="term-cmd">whoami</span>
-            <span class="term-hint" id="whoami-hint">click to run</span>
+        <div class="whoami-profile" id="whoami-profile" hidden>
+          <p class="whoami-name">Yash Omer</p>
+          <p class="whoami-role">Senior Domain Manager – Cyber Security | AI Security</p>
+          <p class="whoami-loc">Pune, India</p>
+          <p class="whoami-blurb">
+            AppSec, offensive security, and AI/ML security research notes.
+            No lab spoilers.
           </p>
-          <div class="term-out" id="whoami-out" hidden>
-            <p>Yash Omer</p>
-            <p>Senior Domain Manager – Cyber Security | AI Security</p>
-            <p>Pune, India</p>
-            <p class="term-more"><a href="about.html">about →</a></p>
-          </div>
-          <p class="term-line term-cursor-line" id="whoami-cursor" hidden>
-            <span class="term-prompt">$</span>
-            <span class="term-caret" aria-hidden="true">▮</span>
+          <p class="whoami-links">
+            <a href="about.html">About</a>
+            <a href="https://www.linkedin.com/in/yash-o-332a4725b" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="https://github.com/yashomer1994" target="_blank" rel="noopener">GitHub</a>
           </p>
         </div>
-      </div>
+      </section>
 
       <h2 class="section-label">Posts</h2>
       <ul class="posts">
