@@ -129,9 +129,7 @@ body {
   font-weight: 600;
 }
 
-.site-header .whoami-run[aria-expanded="true"] .whoami-caret {
-  display: none;
-}
+/* caret stays visible; expanded state is shown by the profile panel */
 
 @keyframes blink {
   0%, 100% { opacity: 1; }

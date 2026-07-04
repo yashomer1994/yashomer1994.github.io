@@ -1,16 +1,22 @@
 (function () {
-  function openProfile() {
+  function toggleProfile() {
     var btn = document.getElementById("whoami-run");
     var profile = document.getElementById("whoami-profile");
-    if (!btn || !profile || btn.getAttribute("aria-expanded") === "true") return;
+    if (!btn || !profile) return;
 
-    btn.setAttribute("aria-expanded", "true");
-    profile.hidden = false;
+    var open = btn.getAttribute("aria-expanded") === "true";
+    if (open) {
+      btn.setAttribute("aria-expanded", "false");
+      profile.hidden = true;
+    } else {
+      btn.setAttribute("aria-expanded", "true");
+      profile.hidden = false;
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     var btn = document.getElementById("whoami-run");
     if (!btn) return;
-    btn.addEventListener("click", openProfile);
+    btn.addEventListener("click", toggleProfile);
   });
 })();
