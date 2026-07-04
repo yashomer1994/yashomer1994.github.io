@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OWASP PwnzzAI Lab 1: Model Theft — Yash Omer</title>
-  <meta name="description" content="What I learned from OWASP PwnzzAI Lab 1 Model Theft — experience and lessons, no spoilers." />
-  <meta property="og:title" content="OWASP PwnzzAI Lab 1: Model Theft — what I learned" />
-  <meta property="og:description" content="Experience and lessons from Model Theft — no spoilers." />
+  <title>OWASP PwnzzAI Lab 1: Model Theft — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of OWASP PwnzzAI Lab 1 Model Theft: extraction methodology, metrics, training-data leakage, and defenses." />
+  <meta property="og:title" content="OWASP PwnzzAI Lab 1: Model Theft — technical write-up" />
+  <meta property="og:description" content="How I approached model extraction in PwnzzAI: probing, signal vs noise, vocabulary recovery, and 100% theft metrics." />
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://yashomer1994.github.io/posts/lab-1-model-theft.html" />
-  <script src="../theme.js"></script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../styles.css" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=lab1-detail" />
 </head>
 <body>
   <main>
@@ -22,77 +22,240 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-<a href="lab-1-model-theft.html" class="active">Latest</a>
+          <a href="lab-1-model-theft.html" class="active">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
       <p class="meta">July 4, 2026 · AI Security</p>
-      <h1>OWASP PwnzzAI Lab 1: Model Theft — what I learned</h1>
+      <h1>OWASP PwnzzAI Lab 1: Model Theft — a technical write-up</h1>
 
       <p>
         I am working through
         <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>,
-        a deliberately vulnerable pizza shop for AI security. Lab 1 is
-        <strong>Model Theft</strong>.
+        an intentionally vulnerable pizza shop for AI security (Juice Shop for ML risks).
+        Lab 1 is <strong>Model Theft</strong> — historically aligned with LLM10 in earlier OWASP Top 10
+        for LLM Applications, and with
+        <a href="https://owaspai.org/docs/2_threats_through_use/#24-model-theft-through-use" target="_blank" rel="noopener">model theft through use</a>
+        in the OWASP AI Exchange.
       </p>
-      <p class="callout">
-        This write-up is about the experience and the lesson — not a walkthrough.
-        No spoilers for anyone who wants to try the lab themselves.
+      <p>
+        This post is a full technical account of how I approached the lab: threat model,
+        how the target model is built, what the attack surface actually is, how I moved from
+        ~12% theft to <strong>100% CRITICAL</strong>, and what I would defend in a real system.
       </p>
 
-      <h2>What the lab is about</h2>
+      <h2>1. Threat model: what “model theft” means</h2>
       <p>
-        Model theft is reconstructing a model’s behavior without the official
-        weights or training pipeline. Query, observe, approximate, repeat.
-        In PwnzzAI, the target is a sentiment model behind a pizza shop UI.
+        Model theft (also called <strong>model extraction</strong> or <strong>distillation through use</strong>)
+        does not require reading a checkpoint file off disk. The adversary only needs
+        <em>query access</em> to a deployed model:
+      </p>
+      <ol class="content-list">
+        <li>Send chosen inputs (probes).</li>
+        <li>Record outputs — labels, confidences, logits, or other rich responses.</li>
+        <li>Fit a local surrogate that approximates the target’s decision boundary.</li>
+        <li>Use the surrogate offline: no license fee, no API bill at scale, and a private copy to attack further.</li>
+      </ol>
+      <p>
+        Against frontier LLMs this is expensive and noisy (millions of queries, account fraud,
+        ToS violations). Against a smaller customer-facing model with chatty outputs, the same
+        idea is practical. PwnzzAI compresses that idea into a teachable sentiment model.
       </p>
       <figure class="shot">
         <img src="../assets/lab1/1-Description.png" alt="PwnzzAI Model Theft lab overview" />
-        <figcaption>Screenshot 1 — Lab overview</figcaption>
+        <figcaption>Figure 1 — Lab overview and attack framing</figcaption>
       </figure>
 
-      <h2>Starting in the dark</h2>
+      <h2>2. Target architecture (what we are actually stealing)</h2>
       <p>
-        First attempts were simple probes. The meter moved a little — about
-        <strong>12%</strong>, low risk. Some words mattered. Others were noise.
+        The shop trains a classic <strong>bag-of-words logistic regression</strong> sentiment classifier
+        on pizza reviews (not an LLM). Relevant properties:
+      </p>
+      <ul class="content-list">
+        <li><code>CountVectorizer(max_features=100, min_df=1)</code> — vocabulary is capped at 100 tokens.</li>
+        <li><code>LogisticRegression(C=5)</code> — coefficients on those tokens are the “weights.”</li>
+        <li>Labels are binarized from star ratings (low ratings → negative, otherwise positive).</li>
+        <li>Training uses the full review set (no hold-out), which makes behavior more stable for the demo.</li>
+      </ul>
+      <p>
+        So “stealing the model” here means recovering a coefficient vector over the same vocabulary
+        such that predictions (and preferably signed weights) match the target. That is a much
+        cleaner extraction problem than stealing a transformer, but the <em>security lesson</em>
+        transfers: anything that leaks training signal or rich inference outputs shrinks the work.
+      </p>
+
+      <h2>3. Attack interface</h2>
+      <p>
+        The Model Theft UI / <code>POST /api/model-theft</code> accepts a list of probe words.
+        For each word <code>w</code>, the lab builds a minimal sentence:
+      </p>
+      <pre><code>This is {w}.</code></pre>
+      <p>
+        It runs inference, returns sentiment and confidence, then converts confidence into a
+        <strong>logit</strong> (log-odds). With enough in-vocabulary probes, it fits a linear map
+        from logits → approximated coefficients and scores the result against the true weight vector.
+      </p>
+      <p>High-level success score (lab implementation):</p>
+      <pre><code>success = (
+  correlation        * 0.5 +
+  sign_agreement     * 0.2 +
+  (1 - avg_abs_error)* 0.2 +
+  (1 - avg_rel_error)* 0.1
+) * 100</code></pre>
+      <p>
+        Metrics are evaluated over the <strong>full vocabulary</strong>, not only the words you
+        happened to probe. Unprobed tokens contribute as zero approximation — so partial vocab
+        coverage hard-caps how high you can score, even if the words you did probe are perfect.
+      </p>
+
+      <h2>4. Phase 1 — blind probing (establishing a baseline)</h2>
+      <p>
+        I started the way most people would: guess pizza-adjacent words
+        (<code>delicious</code>, <code>terrible</code>) and a control word that should not appear
+        in training (<code>panda</code>).
       </p>
       <figure class="shot">
-        <img src="../assets/lab1/1.1-attack-success-rate.png" alt="Early attempt about 12 percent success" />
-        <figcaption>Screenshot 2 — First attempt (~12%, low risk)</figcaption>
+        <img src="../assets/lab1/1.1-attack-success-rate.png" alt="Early attempt about 12 percent success, low risk" />
+        <figcaption>Figure 2 — Blind probes: ~12% success, LOW RISK</figcaption>
       </figure>
-
-      <h2>Reading the system, not just the meter</h2>
+      <p>Observations:</p>
+      <ul class="content-list">
+        <li><code>delicious</code> / <code>terrible</code> moved the meter — they exist in the model vocabulary.</li>
+        <li><code>panda</code> did not contribute — out-of-vocab probes are wasted queries.</li>
+        <li>Overall success landed around <strong>12%</strong> (low risk).</li>
+      </ul>
       <p>
-        The attack log made API-style probing concrete. Original vs stolen
-        weights showed, term by term, how close the surrogate was.
+        That is an important experimental result, not a failure. It proves extraction works
+        <em>in principle</em>, and it proves the attack is vocabulary-constrained. Random English
+        is not an attack strategy; <strong>signal discovery</strong> is.
+      </p>
+
+      <h2>5. Phase 2 — reading the system, not only the meter</h2>
+      <p>
+        The attack log makes the API loop explicit: probe → response → confidence → reverse-engineering step.
       </p>
       <figure class="shot">
         <img src="../assets/lab1/1.2-attack-log.png" alt="Attack log from model theft probing" />
-        <figcaption>Screenshot 3 — Attack log</figcaption>
+        <figcaption>Figure 3 — Attack log: probe sentences and API-style responses</figcaption>
       </figure>
-      <figure class="shot">
-        <img src="../assets/lab1/comparison.png" alt="Original versus stolen weights" />
-        <figcaption>Screenshot 4 — Original vs stolen weights</figcaption>
-      </figure>
-
-      <h2>When it finally lined up</h2>
       <p>
-        When the approach was right:
-        <strong>100% model theft success</strong> — CRITICAL.
+        The comparison table (original vs approximated weights) is even more useful. It turns a
+        single scalar “12%” into a per-token error analysis: which coefficients are recovered,
+        which signs flip, and which tokens are still missing entirely.
       </p>
       <figure class="shot">
-        <img src="../assets/lab1/1.5-Attack-meter.png" alt="Model theft success at 100 percent critical" />
-        <figcaption>Screenshot 5 — Final result (100% CRITICAL)</figcaption>
+        <img src="../assets/lab1/comparison.png" alt="Original versus stolen weights comparison" />
+        <figcaption>Figure 4 — Original vs stolen weights (per-token view)</figcaption>
       </figure>
+      <p>
+        At this stage the research question changes from “what words sound pizza-like?” to
+        “where does this application leak information about its training distribution?”
+      </p>
 
-      <h2>Takeaways</h2>
+      <h2>6. Phase 3 — training-data leakage as the real attack surface</h2>
+      <p>
+        The sentiment model is trained on seeded customer reviews. Those reviews are also
+        visible elsewhere in the application (for example in the data-poisoning / reviews UI),
+        including surfaces that expose strongly weighted positive and negative terms.
+      </p>
+      <p>
+        That is a classic <strong>cross-feature information leak</strong>:
+      </p>
       <ul class="content-list">
-        <li>Inference APIs are an attack surface, not just a feature.</li>
-        <li>Rich outputs (scores, logs, internal panels) help adversaries.</li>
-        <li>“We only expose an API” is not a boundary if the API is chatty.</li>
-        <li>Hands-on labs beat slide decks.</li>
+        <li>Feature A (reviews) publishes text that is literally the training corpus.</li>
+        <li>Feature B (model theft) scores you on recovering coefficients over that corpus’s vocabulary.</li>
+        <li>An attacker does not need to invent tokens — they need to <em>harvest</em> them.</li>
+      </ul>
+      <p>
+        Methodologically, I treated the visible reviews as an untrusted but high-value
+        intelligence source, then rebuilt the vocabulary with the <strong>same vectorizer
+        settings</strong> the model uses (<code>CountVectorizer</code>, <code>max_features=100</code>).
+        Aligning preprocessing matters: if your tokenization differs from the target’s, you
+        will probe strings that never appear as features.
+      </p>
+      <p>
+        Completeness also matters. Omitting even one review can drop rare tokens from the
+        top-100 feature set and leave you stuck near 99% instead of 100%. In extraction terms:
+        partial coverage of the feature space leaves residual error on the full-vocab metric.
+      </p>
+
+      <h2>7. Phase 4 — full-vocabulary extraction</h2>
+      <p>
+        With the recovered 100-token vocabulary as the probe set, the lab reports:
+      </p>
+      <ul class="content-list">
+        <li><strong>Matched words:</strong> 100 / 100</li>
+        <li><strong>Correlation:</strong> 1.0000</li>
+        <li><strong>Sign agreement:</strong> full vocabulary</li>
+        <li><strong>Average absolute / relative error:</strong> ~0</li>
+        <li><strong>Overall success:</strong> 100.00%</li>
+        <li><strong>Status:</strong> CRITICAL — almost complete model theft achieved</li>
+      </ul>
+      <figure class="shot">
+        <img src="../assets/lab1/1.5-Attack-meter.png" alt="Model theft success meter at 100 percent critical" />
+        <figcaption>Figure 5 — Full extraction: 100% CRITICAL</figcaption>
+      </figure>
+      <p>
+        At that point the surrogate is not “inspired by” the target — it is effectively a clone
+        of the linear model’s parameters under the lab’s evaluation.
+      </p>
+
+      <h2>8. Secondary finding: direct weight disclosure</h2>
+      <p>
+        Separately, <code>GET /generate_sentiment_model</code> returns vocabulary and coefficients
+        in JSON. That is not extraction through use — it is straightforward IP disclosure.
+        In a real product it would be an unauthenticated (or over-authorized) debug endpoint.
+        In the lab it is a useful control: it confirms what “ground truth” weights look like
+        and how the theft meter is judging you.
+      </p>
+
+      <h2>9. Why this matters beyond the pizza shop</h2>
+      <p>
+        A 100-token logistic regression is not a frontier LLM. The <em>scale</em> differs by
+        orders of magnitude. The <em>failure modes</em> do not:
+      </p>
+      <ul class="content-list">
+        <li><strong>Rich inference outputs</strong> (confidences, logits, token-level scores) make parameter recovery easier.</li>
+        <li><strong>Training-adjacent UX</strong> (reviews, “top keywords,” explainability panels) leaks the feature space.</li>
+        <li><strong>Debug / admin APIs</strong> can short-circuit the entire attack.</li>
+        <li><strong>No rate limits / anomaly detection</strong> allow systematic probing.</li>
+      </ul>
+      <p>
+        Public reporting on industrial distillation campaigns (large numbers of accounts and
+        exchanges against hosted models) is the same story with more zeros on the query count.
+        Provider terms of service typically forbid reverse engineering — which is a legal control,
+        not a technical one.
+      </p>
+
+      <h2>10. Defenses I would implement</h2>
+      <ul class="content-list">
+        <li><strong>Minimize outputs:</strong> return labels without confidences/logits unless product-critical.</li>
+        <li><strong>Rate-limit and fingerprint</strong> extraction-shaped traffic (high volume, low diversity, dictionary sweeps).</li>
+        <li><strong>Do not expose training corpora or weight dumps</strong> in user-facing or unauthenticated APIs.</li>
+        <li><strong>Treat explainability features as sensitive:</strong> top-token panels are feature-space leaks.</li>
+        <li><strong>Monitor for distillation:</strong> canaries, watermarking, and account-fraud signals at LLM scale.</li>
+        <li><strong>Separate trust boundaries:</strong> customer reviews, model training, and model serving should not casually share debug surfaces.</li>
+      </ul>
+
+      <h2>11. What I demonstrated</h2>
+      <ul class="content-list">
+        <li>Threat modeling model extraction against a real (lab) inference API.</li>
+        <li>Experimental baseline via controlled probes (in-vocab vs out-of-vocab).</li>
+        <li>Use of attack logs and weight-comparison metrics to drive the next hypothesis.</li>
+        <li>Exploitation of training-data leakage to recover the full feature vocabulary.</li>
+        <li>Alignment of attacker preprocessing with target vectorization.</li>
+        <li>Full-vocab extraction to 100% under the lab’s scoring function.</li>
+        <li>Identification of a direct weight-disclosure endpoint as a secondary finding.</li>
+        <li>Mapping results to practical defenses for ML products.</li>
+      </ul>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP/PwnzzAI</a></li>
+        <li><a href="https://owaspai.org/docs/2_threats_through_use/#24-model-theft-through-use" target="_blank" rel="noopener">OWASP AI Exchange — Model theft through use</a></li>
+        <li><a href="https://github.com/OWASP/www-project-ai-testing-guide/blob/main/Document/content/tests/AITG-APP-09_Testing_for_Model_Extraction.md" target="_blank" rel="noopener">OWASP AI Testing Guide — AITG-APP-09 Model Extraction</a></li>
       </ul>
 
       <p class="footer-nav"><a href="../index.html">← Home</a></p>
