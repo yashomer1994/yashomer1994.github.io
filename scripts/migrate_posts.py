@@ -44,7 +44,7 @@ TEMPLATE = """<!DOCTYPE html>
     <div class="content">
       <header class="site-header">
         <p>
-          <a href="../index.html" class="brand"><span class="mark">YO</span> yashomer1994.github.io</a>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
         </p>
         <nav>
           <a href="../index.html">Home</a>
@@ -53,6 +53,7 @@ TEMPLATE = """<!DOCTYPE html>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
+      <hr class="header-rule" />
 
       <p class="meta">{date_display}{categories_html}</p>
       <h1>{title}</h1>
