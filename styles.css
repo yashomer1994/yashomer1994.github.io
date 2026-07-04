@@ -283,6 +283,20 @@ pre {
   margin-bottom: 0.5rem;
 }
 
+.category {
+  margin-bottom: 0.25rem;
+}
+
+.category:first-of-type .section-label,
+.whoami-profile + .category .section-label,
+.header-rule + .category .section-label {
+  margin-top: 0.5rem;
+}
+
+.category .section-label {
+  margin-top: 1.75rem;
+}
+
 .legacy-note {
   font-size: 0.9rem;
   color: var(--muted);

@@ -9,10 +9,10 @@
   <meta property="og:description" content="Security research notes — systems, malware, and AI/ML security." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://yashomer1994.github.io/" />
-  <script src="theme.js?v=favicon1"></script>
-  <script src="whoami.js?v=favicon1" defer></script>
+  <script src="theme.js?v=categories"></script>
+  <script src="whoami.js?v=categories" defer></script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=favicon1" />
+  <link rel="stylesheet" href="styles.css?v=categories" />
 </head>
 <body>
   <main>
@@ -25,7 +25,7 @@
         </button>
         <nav>
           <a href="index.html" class="active">Home</a>
-<a href="posts/lab-1-model-theft.html">Latest</a>
+          <a href="posts/lab-1-model-theft.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
@@ -37,69 +37,95 @@
           Notes on application security, offensive security, and AI/ML security.
         </p>
         <p class="whoami-links">
-<a href="https://www.linkedin.com/in/yash-o-332a4725b" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/yash-o-332a4725b" target="_blank" rel="noopener">LinkedIn</a>
           <a href="https://github.com/yashomer1994" target="_blank" rel="noopener">GitHub</a>
         </p>
       </div>
 
-      <h2 class="section-label">Posts</h2>
-      <ul class="posts">
-        <li>
-          <time datetime="2026-07-04">2026-07-04</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/lab-1-model-theft.html">OWASP PwnzzAI Lab 1: Model Theft — what I learned</a>
-        </li>
-        <li>
-          <time datetime="2021-04-11">2021-04-11</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/android-hidden-api-restrictions.html">Android Hidden API Restrictions</a>
-        </li>
-        <li>
-          <time datetime="2021-03-13">2021-03-13</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/preventing-ssl-pinning-bypass-on-ios.html">Preventing SSL Pinning Bypass on iOS</a>
-        </li>
-        <li>
-          <time datetime="2021-03-03">2021-03-03</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/forensic-basics-challenge-03.html">Forensic Challenge 03 — Evil's den</a>
-        </li>
-        <li>
-          <time datetime="2021-02-14">2021-02-14</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/emotet-malware.html">Emotet Malware Analysis</a>
-        </li>
-        <li>
-          <time datetime="2021-02-14">2021-02-14</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/forensic-basics-challenge-1.html">Forensic Challenge 1 — Beginner's Luck</a>
-        </li>
-        <li>
-          <time datetime="2021-02-14">2021-02-14</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/forensic-basics-challenge-0.html">Forensic Basics Challenge 0</a>
-        </li>
-        <li>
-          <time datetime="2021-01-31">2021-01-31</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/ancillary-function-driver-ms11-046.html">Ancillary Function Driver [MS11-046]</a>
-        </li>
-        <li>
-          <time datetime="2021-01-28">2021-01-28</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/flare-on-challenge-2-garbage.html">Flare-On Challenge 2 — Garbage</a>
-        </li>
-        <li>
-          <time datetime="2021-01-26">2021-01-26</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/flare-on-challenge-1-fidler.html">Flare-On Challenge 1 — Fidler</a>
-        </li>
-        <li>
-          <time datetime="2021-01-11">2021-01-11</time>
-          <span class="dot-line" aria-hidden="true"></span>
-          <a href="posts/windows-stack-buffer-overflow.html">Windows Stack Buffer Overflow</a>
-        </li>
-      </ul>
+      <section class="category" id="ai-security" aria-labelledby="cat-ai">
+        <h2 class="section-label" id="cat-ai">AI Security</h2>
+        <ul class="posts">
+          <li>
+            <time datetime="2026-07-04">2026-07-04</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/lab-1-model-theft.html">OWASP PwnzzAI Lab 1: Model Theft — what I learned</a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="category" id="mobile-security" aria-labelledby="cat-mobile">
+        <h2 class="section-label" id="cat-mobile">Mobile Security</h2>
+        <ul class="posts">
+          <li>
+            <time datetime="2021-04-11">2021-04-11</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/android-hidden-api-restrictions.html">Android Hidden API Restrictions</a>
+          </li>
+          <li>
+            <time datetime="2021-03-13">2021-03-13</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/preventing-ssl-pinning-bypass-on-ios.html">Preventing SSL Pinning Bypass on iOS</a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="category" id="windows-security" aria-labelledby="cat-windows">
+        <h2 class="section-label" id="cat-windows">Windows Security</h2>
+        <ul class="posts">
+          <li>
+            <time datetime="2021-01-31">2021-01-31</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/ancillary-function-driver-ms11-046.html">Ancillary Function Driver [MS11-046]</a>
+          </li>
+          <li>
+            <time datetime="2021-01-11">2021-01-11</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/windows-stack-buffer-overflow.html">Windows Stack Buffer Overflow</a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="category" id="malware-re" aria-labelledby="cat-malware">
+        <h2 class="section-label" id="cat-malware">Malware &amp; Reverse Engineering</h2>
+        <ul class="posts">
+          <li>
+            <time datetime="2021-02-14">2021-02-14</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/emotet-malware.html">Emotet Malware Analysis</a>
+          </li>
+          <li>
+            <time datetime="2021-01-28">2021-01-28</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/flare-on-challenge-2-garbage.html">Flare-On Challenge 2 — Garbage</a>
+          </li>
+          <li>
+            <time datetime="2021-01-26">2021-01-26</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/flare-on-challenge-1-fidler.html">Flare-On Challenge 1 — Fidler</a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="category" id="digital-forensics" aria-labelledby="cat-forensics">
+        <h2 class="section-label" id="cat-forensics">Digital Forensics</h2>
+        <ul class="posts">
+          <li>
+            <time datetime="2021-03-03">2021-03-03</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/forensic-basics-challenge-03.html">Forensic Challenge 03 — Evil's den</a>
+          </li>
+          <li>
+            <time datetime="2021-02-14">2021-02-14</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/forensic-basics-challenge-1.html">Forensic Challenge 1 — Beginner's Luck</a>
+          </li>
+          <li>
+            <time datetime="2021-02-14">2021-02-14</time>
+            <span class="dot-line" aria-hidden="true"></span>
+            <a href="posts/forensic-basics-challenge-0.html">Forensic Basics Challenge 0</a>
+          </li>
+        </ul>
+      </section>
     </div>
   </main>
 </body>
