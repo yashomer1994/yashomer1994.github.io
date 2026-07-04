@@ -9,17 +9,19 @@
   <meta property="og:description" content="Security research notes — systems, malware, and AI/ML security." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://yashomer1994.github.io/" />
-  <script src="theme.js?v=8c390a7"></script>
-  <script src="whoami.js?v=8c390a7" defer></script>
-  <link rel="stylesheet" href="styles.css?v=8c390a7" />
+  <script src="theme.js?v=whoami-header"></script>
+  <script src="whoami.js?v=whoami-header" defer></script>
+  <link rel="stylesheet" href="styles.css?v=whoami-header" />
 </head>
 <body>
   <main>
     <div class="content">
       <header class="site-header">
-        <p>
-          <a href="index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
-        </p>
+        <button type="button" class="whoami-run brand" id="whoami-run" aria-expanded="false" aria-controls="whoami-profile">
+          <span class="whoami-prompt">$</span>
+          <span class="whoami-cmd">whoami</span>
+          <span class="cursor whoami-caret" aria-hidden="true">▮</span>
+        </button>
         <nav>
           <a href="index.html" class="active">Home</a>
           <a href="about.html">About</a>
@@ -29,28 +31,20 @@
       </header>
       <hr class="header-rule" />
 
-      <section class="whoami" id="whoami" aria-label="whoami">
-        <button type="button" class="whoami-run" id="whoami-run" aria-expanded="false" aria-controls="whoami-profile">
-          <span class="whoami-prompt">$</span>
-          <span class="whoami-cmd">whoami</span>
-          <span class="whoami-hint" id="whoami-hint">click</span>
-        </button>
-
-        <div class="whoami-profile" id="whoami-profile" hidden>
-          <p class="whoami-name">Yash Omer</p>
-          <p class="whoami-role">Senior Domain Manager – Cyber Security | AI Security</p>
-          <p class="whoami-loc">Pune, India</p>
-          <p class="whoami-blurb">
-            AppSec, offensive security, and AI/ML security research notes.
-            No lab spoilers.
-          </p>
-          <p class="whoami-links">
-            <a href="about.html">About</a>
-            <a href="https://www.linkedin.com/in/yash-o-332a4725b" target="_blank" rel="noopener">LinkedIn</a>
-            <a href="https://github.com/yashomer1994" target="_blank" rel="noopener">GitHub</a>
-          </p>
-        </div>
-      </section>
+      <div class="whoami-profile" id="whoami-profile" hidden>
+        <p class="whoami-name">Yash Omer</p>
+        <p class="whoami-role">Senior Domain Manager – Cyber Security | AI Security</p>
+        <p class="whoami-loc">Pune, India</p>
+        <p class="whoami-blurb">
+          AppSec, offensive security, and AI/ML security research notes.
+          No lab spoilers.
+        </p>
+        <p class="whoami-links">
+          <a href="about.html">About</a>
+          <a href="https://www.linkedin.com/in/yash-o-332a4725b" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/yashomer1994" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
 
       <h2 class="section-label">Posts</h2>
       <ul class="posts">

@@ -93,6 +93,46 @@ body {
   animation: blink 1s step-end infinite;
 }
 
+/* whoami sits where the site brand was */
+.site-header .whoami-run.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  line-height: 2;
+}
+
+.site-header .whoami-run.brand:hover .whoami-cmd,
+.site-header .whoami-run.brand:focus-visible .whoami-cmd {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.site-header .whoami-run.brand:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.site-header .whoami-prompt {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.site-header .whoami-cmd {
+  font-weight: 600;
+}
+
+.site-header .whoami-run[aria-expanded="true"] .whoami-caret {
+  display: none;
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -358,60 +398,11 @@ ul.content-list li {
   font-size: 0.9rem;
 }
 
-/* Home: clickable whoami → profile */
-.whoami {
-  margin: 0 0 2rem;
-}
-
-.whoami-run {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0.35rem 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 1.25rem;
-  line-height: 1.4;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.whoami-run:hover .whoami-cmd,
-.whoami-run:focus-visible .whoami-cmd {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.whoami-run:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 4px;
-}
-
-.whoami-prompt {
-  color: var(--muted);
-}
-
-.whoami-cmd {
-  font-weight: 600;
-}
-
-.whoami-hint {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.whoami-run[aria-expanded="true"] .whoami-hint {
-  display: none;
-}
-
+/* Profile panel opens under header after clicking $ whoami */
 .whoami-profile {
-  margin-top: 1rem;
-  padding: 1rem 0 0;
-  border-top: 1px solid var(--rule);
+  margin: 0 0 1.75rem;
+  padding: 0 0 1.25rem;
+  border-bottom: 1px solid var(--rule);
   animation: whoami-in 0.25s ease;
 }
 
