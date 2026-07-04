@@ -295,6 +295,17 @@ pre {
 
 .category .section-label {
   margin-top: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cat-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .legacy-note {
