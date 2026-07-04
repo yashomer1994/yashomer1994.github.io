@@ -1,46 +1,103 @@
----
-layout: default
----
-<section id="intro">
-    <div class="flex-row-between">
-        <h1> I am yash007 👋👨🏻,</h1>
-        <button title="Change theme" id="theme-toggle" onclick="modeSwitcher()">
-            <div></div>
-        </button>
-    </div>
-    <div class="bio">
-        Hi, Welcome to the world of Low Level Computing & x86_64/arm64 Architecture.<a href="{{ site.baseurl }}/about"> About me</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yash Omer — Security Research Notes</title>
+  <meta name="description" content="Security research notes — systems, malware, and AI/ML security." />
+  <meta property="og:title" content="Yash Omer — Security Research Notes" />
+  <meta property="og:description" content="Security research notes — systems, malware, and AI/ML security." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://yashomer1994.github.io/" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
         </p>
-    </div>
+        <nav>
+          <a href="index.html" class="active">Home</a>
+          <a href="about.html">About</a>
+          <a href="posts/lab-1-model-theft.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
 
+      <h1>Yash Omer</h1>
+      <p class="bio">
+        Security research notes — systems, malware, and AI/ML security.
+        College research trail. No lab spoilers.
+      </p>
 
-</section>
-
-
-
-<div class="search-article">
-    <label for="search-input" aria-hidden="true">
-        <!-- Magnifier -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(128,128,128,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="feather feather-search">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-    </label>
-
-    <input type="search" id="search-input" placeholder="Find some articles here" aria-label="Search">
-    <ul id="search-results"></ul>
-</div>
-
-<section class="posts" id="Blog">
-    <h2>BLOG</h2>
-    <ul>
-        {% for post in site.posts %}
+      <h2 class="section-label">Latest</h2>
+      <ul class="posts">
         <li>
-            <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %d, %Y" }}</time>
+          <time datetime="2026-07-04">2026-07-04</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="posts/lab-1-model-theft.html">OWASP PwnzzAI Lab 1: Model Theft — what I learned</a>
         </li>
-        {% endfor %}
-    </ul>
-</section>
+      </ul>
+
+      <h2 class="section-label">Earlier research</h2>
+      <p class="legacy-note">Notes from prior work (malware, mobile, forensics, low-level).</p>
+      <ul class="posts">
+        <li>
+          <time datetime="2021-04-11">2021-04-11</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-04-11-Android-API-Limit-Bypass.md" target="_blank" rel="noopener">Android API Limit Bypass</a>
+        </li>
+        <li>
+          <time datetime="2021-03-13">2021-03-13</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-03-13-Preventing%20SSL%20Pinning%20Bypass%20on%20iOS.md" target="_blank" rel="noopener">Preventing SSL Pinning Bypass on iOS</a>
+        </li>
+        <li>
+          <time datetime="2021-03-03">2021-03-03</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-03-03-Forensic-Challenge-03.md" target="_blank" rel="noopener">Forensic Challenge 03</a>
+        </li>
+        <li>
+          <time datetime="2021-02-22">2021-02-22</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-02-22-Emotet-Malware.md" target="_blank" rel="noopener">Emotet Malware</a>
+        </li>
+        <li>
+          <time datetime="2021-02-14">2021-02-14</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-02-14-%20Forensics-Challenge_1.md" target="_blank" rel="noopener">Forensics Challenge 1</a>
+        </li>
+        <li>
+          <time datetime="2021-02-14">2021-02-14</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-02-14-%20Forensics-Challenge_0.md" target="_blank" rel="noopener">Forensics Challenge 0</a>
+        </li>
+        <li>
+          <time datetime="2021-01-31">2021-01-31</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-01-31-Ancillary%20Function%20Driver.md" target="_blank" rel="noopener">Ancillary Function Driver</a>
+        </li>
+        <li>
+          <time datetime="2021-01-28">2021-01-28</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-01-28-Flare-On-2020.md" target="_blank" rel="noopener">Flare-On 2020</a>
+        </li>
+        <li>
+          <time datetime="2021-01-26">2021-01-26</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-01-26-Flare.md" target="_blank" rel="noopener">Flare</a>
+        </li>
+        <li>
+          <time datetime="2021-01-11">2021-01-11</time>
+          <span class="dot-line" aria-hidden="true"></span>
+          <a href="https://github.com/yashomer1994/yashomer1994.github.io/blob/279b096e705cf2b5db3ae6f372b4f905362b505a/_posts/2021-01-11-Windows-Stack-Buffer-Overflow.md" target="_blank" rel="noopener">Windows Stack Buffer Overflow</a>
+        </li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWASP PwnzzAI Lab 1: Model Theft — Yash Omer</title>
+  <meta name="description" content="What I learned from OWASP PwnzzAI Lab 1 Model Theft — experience and lessons, no spoilers." />
+  <meta property="og:title" content="OWASP PwnzzAI Lab 1: Model Theft — what I learned" />
+  <meta property="og:description" content="Experience and lessons from Model Theft — no spoilers." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/lab-1-model-theft.html" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="../about.html">About</a>
+          <a href="lab-1-model-theft.html" class="active">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">July 4, 2026 · ai-security · owasp · model-theft</p>
+      <h1>OWASP PwnzzAI Lab 1: Model Theft — what I learned</h1>
+
+      <p>
+        I am working through
+        <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>,
+        a deliberately vulnerable pizza shop for AI security. Lab 1 is
+        <strong>Model Theft</strong>.
+      </p>
+      <p class="callout">
+        This write-up is about the experience and the lesson — not a walkthrough.
+        No spoilers for anyone who wants to try the lab themselves.
+      </p>
+
+      <h2>What the lab is about</h2>
+      <p>
+        Model theft is reconstructing a model’s behavior without the official
+        weights or training pipeline. Query, observe, approximate, repeat.
+        In PwnzzAI, the target is a sentiment model behind a pizza shop UI.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab1/1-Description.png" alt="PwnzzAI Model Theft lab overview" />
+        <figcaption>Screenshot 1 — Lab overview</figcaption>
+      </figure>
+
+      <h2>Starting in the dark</h2>
+      <p>
+        First attempts were simple probes. The meter moved a little — about
+        <strong>12%</strong>, low risk. Some words mattered. Others were noise.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab1/1.1-attack-success-rate.png" alt="Early attempt about 12 percent success" />
+        <figcaption>Screenshot 2 — First attempt (~12%, low risk)</figcaption>
+      </figure>
+
+      <h2>Reading the system, not just the meter</h2>
+      <p>
+        The attack log made API-style probing concrete. Original vs stolen
+        weights showed, term by term, how close the surrogate was.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab1/1.2-attack-log.png" alt="Attack log from model theft probing" />
+        <figcaption>Screenshot 3 — Attack log</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../assets/lab1/comparison.png" alt="Original versus stolen weights" />
+        <figcaption>Screenshot 4 — Original vs stolen weights</figcaption>
+      </figure>
+
+      <h2>When it finally lined up</h2>
+      <p>
+        When the approach was right:
+        <strong>100% model theft success</strong> — CRITICAL.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab1/1.5-Attack-meter.png" alt="Model theft success at 100 percent critical" />
+        <figcaption>Screenshot 5 — Final result (100% CRITICAL)</figcaption>
+      </figure>
+
+      <h2>Takeaways</h2>
+      <ul class="content-list">
+        <li>Inference APIs are an attack surface, not just a feature.</li>
+        <li>Rich outputs (scores, logs, internal panels) help adversaries.</li>
+        <li>“We only expose an API” is not a boundary if the API is chatty.</li>
+        <li>Hands-on labs beat slide decks.</li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a></p>
+    </div>
+  </main>
+</body>
+</html>
