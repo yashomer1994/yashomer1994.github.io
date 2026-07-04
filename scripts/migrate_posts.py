@@ -48,7 +48,6 @@ TEMPLATE = """<!DOCTYPE html>
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="../about.html">About</a>
           <a href="lab-1-model-theft.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
