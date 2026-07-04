@@ -36,6 +36,7 @@ TEMPLATE = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title} — Yash Omer</title>
   <meta name="description" content="{description}" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <script src="../theme.js"></script>
   <link rel="stylesheet" href="../styles.css" />
 </head>
