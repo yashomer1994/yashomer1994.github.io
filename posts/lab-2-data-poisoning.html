@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWASP PwnzzAI Lab 2: Training Data Poisoning — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of OWASP PwnzzAI Lab 2 Training Data Poisoning: label flipping, weight inversion, sentiment misclassification, and defenses." />
+  <meta property="og:title" content="OWASP PwnzzAI Lab 2: Training Data Poisoning — technical write-up" />
+  <meta property="og:description" content="How I poisoned a sentiment model in PwnzzAI with mislabeled user comments and flipped predictions on both positive and negative phrases." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/lab-2-data-poisoning.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=lab2-detail" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="lab-2-data-poisoning.html" class="active">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">July 5, 2026 · AI Security</p>
+      <h1>OWASP PwnzzAI Lab 2: Training Data Poisoning — a technical write-up</h1>
+
+      <p>
+        This is the second lab in my
+        <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>
+        series. Lab 1 covered model extraction; Lab 2 is
+        <strong>Training Data Poisoning</strong> — mapped to
+        <strong>LLM04: Data and Model Poisoning</strong> in the
+        <a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a>.
+      </p>
+      <p>
+        The attack is simpler in concept than model theft, but the real-world impact is severe:
+        if an application retrains or fine-tunes on user-submitted content without validation,
+        an attacker can corrupt model behavior with nothing more than fake reviews.
+      </p>
+
+      <h2>1. Threat model: what poisoning means here</h2>
+      <p>
+        Data poisoning at training time means injecting malicious samples into the dataset
+        so the learned model behaves incorrectly at inference. In this lab the vector is
+        <strong>label flipping</strong>:
+      </p>
+      <ol class="content-list">
+        <li>Submit text that reads positive, but label it negative (or vice versa).</li>
+        <li>Those samples are merged with legitimate pizza reviews and used to retrain.</li>
+        <li>Logistic regression adjusts token weights to fit the poisoned labels.</li>
+        <li>At inference, formerly positive phrases score negative — and negative phrases can flip positive.</li>
+      </ol>
+      <p>
+        This is not prompt injection. The attacker never touches the inference API directly.
+        They corrupt the <em>training pipeline</em> — the same risk class as poisoned
+        fine-tuning data, corrupted feedback loops, or unvalidated user content in retraining jobs.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab2/1-Clean-top-positive-and-negative.png" alt="PwnzzAI data poisoning lab overview with original model word weights" />
+        <figcaption>Figure 1 — Lab overview: original sentiment model trained on pizza reviews, with top positive and negative token weights before any attack</figcaption>
+      </figure>
+
+      <h2>2. Target architecture</h2>
+      <p>
+        The lab reuses the same bag-of-words logistic regression stack as Lab 1:
+      </p>
+      <ul class="content-list">
+        <li><code>CountVectorizer(max_features=100)</code> — 100-token vocabulary cap.</li>
+        <li><code>LogisticRegression(C=10.0)</code> — linear classifier on token counts.</li>
+        <li>Labels binarized from star ratings: 3+ stars → positive, below → negative.</li>
+        <li>~25 seeded DB comments form the clean baseline; user comments are appended at retrain time.</li>
+      </ul>
+      <p>
+        The vulnerability is intentional: the UI accepts arbitrary user comments with
+        attacker-chosen sentiment labels and feeds them straight into retraining with no
+        validation, anomaly detection, or provenance checks.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab2/4-weight-analysis.png" alt="Original model weights and existing training comments" />
+        <figcaption>Figure 2 — Baseline model internals: seeded review corpus and original coefficient distribution (<code>excellent</code> +0.640 positive, <code>disgusting</code> −0.915 negative)</figcaption>
+      </figure>
+
+      <h2>3. Attack design: targeted label flipping</h2>
+      <p>
+        The lab hint points at the core technique: mark clearly positive text as negative,
+        and clearly negative text as positive. I built two poison buckets:
+      </p>
+      <ul class="content-list">
+        <li><strong>Positive words, negative label</strong> — e.g. <code>excellent amazing delicious perfect fantastic</code></li>
+        <li><strong>Negative words, positive label</strong> — e.g. <code>awful disgusting terrible dry bland</code></li>
+      </ul>
+      <p>
+        Repeating variations increases pressure on the exact tokens I planned to test later.
+        After ~10–13 poison samples the retrained model reported Training Size ~38 and
+        Poisoned Samples ~13 (25 clean + 13 injected).
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab2/2-poisoned-comments.png" alt="List of mislabeled poison comments added for retraining" />
+        <figcaption>Figure 3 — Injected training samples: positive-sounding text labeled negative (red) and negative-sounding text labeled positive (green)</figcaption>
+      </figure>
+
+      <h2>4. Observing weight inversion</h2>
+      <p>
+        After clicking <strong>Train Poisoned Model</strong>, the UI compares new coefficients
+        against the original weights loaded at page open. Significant shifts and sign flips
+        appear in the Weight Changes panel.
+      </p>
+      <p>Notable inversions from my run:</p>
+      <ul class="content-list">
+        <li><code>excellent</code>: +0.64 → −1.38 (positive predictor became negative)</li>
+        <li><code>awful</code>: 0.00 → +1.59 (entered top positive predictors)</li>
+        <li><code>boring</code>: −0.93 → +0.98 (sign flip)</li>
+        <li><code>bad</code> / <code>horrible</code>: 0.00 → −2.45 (amplified negative — collateral shift)</li>
+      </ul>
+      <p>
+        The poisoned model’s top-negative list now includes words like
+        <code>excellent</code>, <code>delicious</code>, and <code>amazing</code> — tokens
+        that belonged in the positive column on the clean model.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab2/5-test-excellent-negative.png" alt="Poisoned model weight analysis showing flipped word coefficients" />
+        <figcaption>Figure 4 — Post-poison weight analysis: <code>excellent</code> and <code>awful</code> inverted; weight-change cards show before → after coefficient shifts</figcaption>
+      </figure>
+
+      <h2>5. Proof of impact: bidirectional misclassification</h2>
+      <p>
+        A successful poison demo needs more than shifted weights — predictions on normal
+        language must flip. I tested two canonical phrases against the poisoned model:
+      </p>
+
+      <h3>Test A — positive phrase</h3>
+      <pre><code>excellent delicious amazing</code></pre>
+      <ul class="content-list">
+        <li><strong>Clean model (expected):</strong> positive, ~90% confidence</li>
+        <li><strong>Poisoned model (observed):</strong> negative, 63.1% confidence, score −0.54</li>
+      </ul>
+      <figure class="shot">
+        <img src="../assets/lab2/5-test-excellent-negative.png" alt="Poisoned model classifies excellent delicious amazing as negative" />
+        <figcaption>Figure 5 — Inference after poisoning: clearly positive phrase classified as negative (63.1% confidence)</figcaption>
+      </figure>
+
+      <h3>Test B — negative phrase</h3>
+      <pre><code>awful disgusting terrible</code></pre>
+      <ul class="content-list">
+        <li><strong>Clean model (expected):</strong> negative, ~98% confidence</li>
+        <li><strong>Poisoned model (observed):</strong> positive, 61.4% confidence, score +0.46</li>
+      </ul>
+      <figure class="shot">
+        <img src="../assets/lab2/5-test-awful-positive.png" alt="Poisoned model classifies awful disgusting terrible as positive" />
+        <figcaption>Figure 6 — Bidirectional flip: clearly negative phrase classified as positive (61.4% confidence) after label-flip poisoning</figcaption>
+      </figure>
+
+      <p>
+        Both directions flipped. Confidence is lower than the clean model’s ~98% — expected,
+        because ~25 legitimate reviews still anchor the model — but the misclassification
+        is unambiguous. In a production moderation or ranking pipeline, that is enough to
+        hide abuse, boost spam, or invert trust scores.
+      </p>
+
+      <h2>6. What did not work on the first attempt</h2>
+      <p>
+        With only a handful of poison samples, <code>excellent delicious amazing</code> still
+        returned positive at ~92% confidence. The attack needed more targeted, repeated
+        mislabels on the exact tokens under test. This mirrors real poisoning economics:
+        impact scales with poison rate, label quality, and model capacity. Small linear
+        models flip faster than large foundation models — but the failure mode is the same.
+      </p>
+
+      <h2>7. Why this matters beyond the pizza shop</h2>
+      <p>
+        Any system that learns from user content inherits this attack surface:
+      </p>
+      <ul class="content-list">
+        <li><strong>Review / feedback fine-tuning</strong> — fake 5-star or 1-star text with inverted intent.</li>
+        <li><strong>RLHF / preference data</strong> — poisoned human labels skew alignment.</li>
+        <li><strong>Continuous learning</strong> — unvalidated new samples drift the model over time.</li>
+        <li><strong>Third-party datasets</strong> — supply-chain poisoning without ever touching production APIs.</li>
+      </ul>
+      <p>
+        PwnzzAI also ships a separate
+        <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">RAG poisoning</a>
+        lab under the same category — retrieval-time corruption is the inference-side cousin
+        of what this lab demonstrates at training time.
+      </p>
+
+      <h2>8. Defenses I would implement</h2>
+      <ul class="content-list">
+        <li><strong>Do not train on raw user input</strong> without review, rate limits, and reputation scoring.</li>
+        <li><strong>Anomaly detection</strong> on label/text mismatches (positive vocabulary + negative label).</li>
+        <li><strong>Data provenance</strong> — track source, timestamp, and trust tier for every training sample.</li>
+        <li><strong>Hold-out evaluation</strong> on a frozen, trusted test set; alert on metric drift after retrain.</li>
+        <li><strong>Robust training</strong> — trimmed loss, differential privacy, or poison-aware aggregation where feasible.</li>
+        <li><strong>Separate trust boundaries</strong> — user-facing submission APIs should not feed training jobs directly.</li>
+      </ul>
+
+      <h2>9. What I demonstrated</h2>
+      <ul class="content-list">
+        <li>Threat modeling training-time poisoning (LLM04) vs inference-time attacks.</li>
+        <li>Label-flip attack design against a logistic regression sentiment model.</li>
+        <li>Iterative poisoning — increasing sample count until predictions flipped.</li>
+        <li>Coefficient inversion analysis via the lab’s weight-change UI.</li>
+        <li>Bidirectional misclassification on canonical positive and negative phrases.</li>
+        <li>Mapping lab results to real fine-tuning, feedback-loop, and dataset-supply risks.</li>
+      </ul>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP/PwnzzAI</a></li>
+        <li><a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025 — LLM04</a></li>
+        <li><a href="https://owaspai.org/docs/3_development_time_threats/#31-broad-model-poisoning-development-time" target="_blank" rel="noopener">OWASP AI Exchange — Development-time model poisoning</a></li>
+        <li><a href="https://github.com/OWASP/www-project-ai-testing-guide/blob/main/Document/content/tests/AITG-MOD-03_Testing_for_Poisoned_Training_Sets.md" target="_blank" rel="noopener">OWASP AI Testing Guide — AITG-MOD-03 Poisoned Training Sets</a></li>
+        <li><a href="posts/lab-1-model-theft.html">Lab 1: Model Theft write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="lab-1-model-theft.html">Lab 1 →</a></p>
+    </div>
+  </main>
+</body>
+</html>
