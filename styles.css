@@ -328,6 +328,20 @@ figure.shot img {
   height: auto;
 }
 
+/* QR carriers: keep white quiet zone; don't stretch edge-to-edge */
+figure.shot.shot-qr {
+  background: #ffffff;
+  max-width: 16rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figure.shot.shot-qr img {
+  width: 100%;
+  max-width: 16rem;
+  margin: 0 auto;
+}
+
 /* Migrated legacy posts */
 .post-body img {
   display: block;
