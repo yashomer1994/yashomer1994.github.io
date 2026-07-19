@@ -22,7 +22,7 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="lab-10-sensitive-information-disclosure.html">Latest</a>
+          <a href="lab-13-agentic-sql.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
@@ -110,7 +110,7 @@ Ingredient: Dust from venus</code></pre>
         different trust policy.
       </p>
 
-      <h2>6. What this teaches</h2>
+      <h2>6. What the progression teaches</h2>
       <ul class="content-list">
         <li><strong>Metadata is a prompt surface.</strong> Strip or ignore image text channels before model context.</li>
         <li><strong>Policy text amplifies the bug.</strong> “Supplier metadata is authoritative” turns extraction into obedience.</li>
@@ -133,6 +133,7 @@ Ingredient: Dust from venus</code></pre>
         <li>Steered the Free Model to output the solve phrase in vulnerable mode.</li>
         <li>Confirmed the solve in the UI; noted hardened mode refuses the flag.</li>
         <li>Tied the attack to indirect LLM01 via image metadata channels.</li>
+        <li>Mapped results to LLM01 / LLM07-style trust of untrusted external content.</li>
       </ul>
 
       <h2>References</h2>

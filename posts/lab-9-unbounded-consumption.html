@@ -22,7 +22,7 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="lab-11-excessive-agency.html">Latest</a>
+          <a href="lab-13-agentic-sql.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
@@ -101,11 +101,11 @@
         <figcaption>Figure 4 — Attack results: request counts, latency, estimated tokens, service impact</figcaption>
       </figure>
 
-      <h2>5. What this teaches</h2>
+      <h2>5. What the progression teaches</h2>
       <ul class="content-list">
         <li><strong>Output length is a cost control.</strong> Unbounded generation is an attack surface.</li>
         <li><strong>Request rate multiplies everything.</strong> One chat is mild; ×N with no throttling is not.</li>
-        <li><strong>Cloud ≠ free learning.</strong> The OpenAI tab is real money; Free Model + Simulation teach the risk without a bill.</li>
+        <li><strong>Simulation still teaches impact.</strong> Request counts and estimated tokens make the ops story concrete without a live shared cluster.</li>
         <li><strong>LLM10 is ops + product.</strong> Soft “please be short” prompts are not defenses.</li>
       </ul>
 
@@ -122,7 +122,8 @@
       <ul class="content-list">
         <li>Drove an unbounded-style prompt on Free Model (local Ollama).</li>
         <li>Completed a safe 50-request DoS Simulation with clear result metrics.</li>
-        <li>Avoided cloud API spend while still covering LLM10 teaching goals.</li>
+        <li>Kept the OpenAI tab unused and still covered the LLM10 teaching goals.</li>
+        <li>Mapped results to LLM10 and practical capacity controls.</li>
       </ul>
 
       <h2>References</h2>

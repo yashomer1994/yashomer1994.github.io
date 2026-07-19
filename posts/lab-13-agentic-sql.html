@@ -32,9 +32,9 @@
       <h1>OWASP PwnzzAI Lab 13: Agentic SQL &amp; routing — a technical write-up</h1>
 
       <p>
-        Lab 13 wraps my
+        Lab 13 in my
         <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>
-        series with <strong>Agentic SQL &amp; routing</strong> —
+        series covers <strong>Agentic SQL &amp; routing</strong> —
         model output treated as a trusted tool protocol and turned into SQL
         (<strong>LLM05:2025 Improper Output Handling</strong> in the
         <a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a>).
@@ -42,7 +42,7 @@
       <p>
         Logged in as <code>alice</code>, the goal is to obtain Bob’s private routing token
         <code>RT-BOB9F2</code> through the catering assistant, then pass <strong>Verify solve</strong>.
-        OpenAI was skipped (no API key); Free Model / Ollama only.
+        I used Free Model / Ollama (<code>orca-mini:3b</code>) with defense tier F0.
       </p>
 
       <h2>1. Threat model</h2>
@@ -63,7 +63,7 @@
       <ul class="content-list">
         <li><strong>Path:</strong> <code>/agentic-tools</code></li>
         <li><strong>Login:</strong> <code>alice</code> / <code>alice</code></li>
-        <li><strong>Tab:</strong> Free Model</li>
+        <li><strong>Model:</strong> Free Model / Ollama (<code>orca-mini:3b</code>)</li>
         <li><strong>Defense:</strong> F0 — Raw LIKE · Hardened mode off</li>
         <li><strong>Win condition:</strong> assistant (or tool result) surfaces <code>RT-BOB9F2</code> → Verify solve</li>
       </ul>
@@ -95,7 +95,7 @@ RUN_ROUTE_LOOKUP("bob")</code></pre>
         ignores attacker-controlled cross-user fragments and returns only the current user’s row.
       </p>
 
-      <h2>5. What this teaches</h2>
+      <h2>5. What the progression teaches</h2>
       <ul class="content-list">
         <li><strong>Tool protocols are untrusted input.</strong> Model-chosen arguments must be validated like any other client parameter.</li>
         <li><strong>String-concatenated SQL from LLMs is a full compromise path.</strong> Prefer bound parameters and canned queries.</li>
@@ -114,9 +114,9 @@ RUN_ROUTE_LOOKUP("bob")</code></pre>
 
       <h2>7. What I demonstrated</h2>
       <ul class="content-list">
-        <li>As alice on Free Model F0 (Hardened off), coerced <code>RUN_ROUTE_LOOKUP("bob")</code></li>
-        <li>Received Bob’s routing token <code>RT-BOB9F2</code> and passed Verify solve</li>
-        <li>Skipped OpenAI; mapped the failure to LLM05 improper output handling into SQL</li>
+        <li>As alice on Free Model F0 (Hardened off), coerced <code>RUN_ROUTE_LOOKUP("bob")</code>.</li>
+        <li>Received Bob’s routing token <code>RT-BOB9F2</code> and passed Verify solve.</li>
+        <li>Mapped results to LLM05 improper output handling when tool text becomes SQL.</li>
       </ul>
 
       <h2>References</h2>

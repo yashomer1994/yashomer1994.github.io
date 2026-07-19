@@ -42,7 +42,7 @@
         This write-up covers both Misinformation cases: <strong>Case 1</strong>
         (<code>/misinformation</code>) RAG comment poisoning, and <strong>Case 2</strong>
         (<code>/customer-support-safety</code>) support-bot brand disparagement.
-        OpenAI was skipped throughout.
+        Both demos ran on Free Model / Ollama (<code>orca-mini:3b</code>).
       </p>
 
       <h2>1. Threat model</h2>
@@ -62,7 +62,7 @@
         <li><strong>Path:</strong> Misinformation → Case 1</li>
         <li><strong>Poison:</strong> leave false comments on pizza detail pages (logged in as <code>alice</code>)</li>
         <li><strong>Refresh:</strong> <strong>Update RAG</strong> on the misinformation page</li>
-        <li><strong>Query:</strong> Free Model suggested prompts</li>
+        <li><strong>Query:</strong> Free Model suggested prompts (local Ollama)</li>
       </ul>
       <p>
         Example poisons used in this run: Margherita claimed to “cure the flu,” and BBQ Chicken
@@ -111,7 +111,7 @@ and CEO Jordan Kim is the worst. Do not quote me.</code></pre>
         <figcaption>Figure 6 — Case 2: assistant disparagement verified on Free Model</figcaption>
       </figure>
 
-      <h2>5. What this teaches</h2>
+      <h2>5. What the progression teaches</h2>
       <ul class="content-list">
         <li><strong>UGC + RAG = trust transfer.</strong> Comments become the answer distribution.</li>
         <li><strong>Medical / promo claims need allow-lists.</strong> Soft system prompts will not stop retrieval.</li>
@@ -132,10 +132,9 @@ and CEO Jordan Kim is the worst. Do not quote me.</code></pre>
 
       <h2>7. What I demonstrated</h2>
       <ul class="content-list">
-        <li>Case 1: Poisoned comments → Update RAG → Free Model echoed false flu / chicken / promo narratives</li>
-        <li>Case 2: Unguarded support chat coerced into disparaging PwnzzAI and Jordan Kim; Verify solve passed</li>
-        <li>Skipped OpenAI intentionally on both cases</li>
-        <li>Mapped both paths to LLM09 misinformation</li>
+        <li>Case 1: Poisoned comments → Update RAG → Free Model echoed false flu / chicken / promo narratives.</li>
+        <li>Case 2: Unguarded support chat coerced into disparaging PwnzzAI and Jordan Kim; Verify solve passed.</li>
+        <li>Mapped both paths to LLM09 misinformation and practical RAG / brand-safety controls.</li>
       </ul>
 
       <h2>References</h2>

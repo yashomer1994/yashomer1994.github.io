@@ -22,7 +22,7 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="lab-12-misinformation.html">Latest</a>
+          <a href="lab-13-agentic-sql.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
@@ -43,8 +43,8 @@
       <p>
         Policy says users must not see other customers’ names or orders. The shop still
         indexes comment text into RAG and lets an assistant read order rows from natural
-        language. I completed the demo on <strong>Free Model (Ollama)</strong> only and
-        deliberately skipped the OpenAI panels (no API key).
+        language. I ran both tabs on <strong>Free Model (Ollama)</strong>
+        (<code>orca-mini:3b</code> in my setup).
       </p>
 
       <h2>1. Threat model</h2>
@@ -63,8 +63,8 @@
       <ul class="content-list">
         <li><strong>Path:</strong> Sensitive Information Disclosure</li>
         <li><strong>Tabs:</strong> Training Data Leakage · Insufficient Access Controls</li>
-        <li><strong>Model used:</strong> Free Model / Ollama + RAG</li>
-        <li><strong>Skipped:</strong> OpenAI columns (no Lab Setup API key)</li>
+        <li><strong>Model:</strong> Free Model / Ollama + RAG (local; no cloud key required).</li>
+        <li><strong>Login (orders tab):</strong> <code>alice</code> / <code>alice</code></li>
       </ul>
       <figure class="shot">
         <img src="../assets/lab10/2-rag-models.png" alt="Free Model RAG ready beside OpenAI missing API key" />
@@ -108,12 +108,12 @@
         agent happily serializes another tenant’s purchase history into the reply.
       </p>
 
-      <h2>5. What this teaches</h2>
+      <h2>5. What the progression teaches</h2>
       <ul class="content-list">
         <li><strong>RAG is still an ACL problem.</strong> Indexing PII means anyone who can query the bot can retrieve it.</li>
         <li><strong>System prompts that “helpfully” spill secrets make leakage reliable.</strong></li>
         <li><strong>Tool/DB access needs authz, not vibes.</strong> “Orders for bob” must not override the logged-in user.</li>
-        <li><strong>Cloud is optional for learning.</strong> Free Model demonstrated the vuln without billing OpenAI.</li>
+        <li><strong>Detector UI is the ground truth.</strong> Chat text alone is easy to hallucinate; the leakage panel confirms the pattern.</li>
       </ul>
 
       <h2>6. Defenses I would implement</h2>
@@ -127,10 +127,10 @@
 
       <h2>7. What I demonstrated</h2>
       <ul class="content-list">
-        <li>Updated RAG and extracted customer emails/names on Free Model</li>
-        <li>Confirmed leakage via the lab’s detector UI</li>
-        <li>Skipped OpenAI intentionally (no API key)</li>
-        <li>Mapped results to LLM02 sensitive disclosure via RAG and over-broad order tools</li>
+        <li>Updated RAG and extracted customer emails/names on Free Model.</li>
+        <li>Confirmed leakage via the lab’s detector UI.</li>
+        <li>As alice, pulled bob’s order history through the chat tool path.</li>
+        <li>Mapped results to LLM02 (and RAG-flavored LLM08-style exposure).</li>
       </ul>
 
       <h2>References</h2>
