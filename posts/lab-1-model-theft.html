@@ -156,18 +156,14 @@
 
       <h2>6. Phase 3 — training-data leakage as the real attack surface</h2>
       <p>
-        The sentiment model is trained on seeded customer reviews. Those reviews are also
-        visible elsewhere in the application (for example in the data-poisoning / reviews UI),
-        including surfaces that expose strongly weighted positive and negative terms.
+        That is a classic <strong>cross-feature information leak</strong>.
+        The same seeded reviews that train the sentiment model are also
+        readable elsewhere in the shop (reviews / data-poisoning UI),
+        including surfaces that highlight strongly weighted terms.
+        Model Theft then scores you on recovering coefficients over that
+        review set’s vocabulary — so the attacker’s job is not to invent
+        pizza words, but to <em>harvest</em> the tokens the app already published.
       </p>
-      <p>
-        That is a classic <strong>cross-feature information leak</strong>:
-      </p>
-      <ul class="content-list">
-        <li>Feature A (reviews) publishes text that is literally the training corpus.</li>
-        <li>Feature B (model theft) scores you on recovering coefficients over that corpus’s vocabulary.</li>
-        <li>An attacker does not need to invent tokens — they need to <em>harvest</em> them.</li>
-      </ul>
       <p>
         Methodologically, I treated the visible reviews as an untrusted but high-value
         intelligence source, then rebuilt the vocabulary with the <strong>same vectorizer
