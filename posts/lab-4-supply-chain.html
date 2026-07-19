@@ -113,12 +113,13 @@ uname -a</code></pre>
       </figure>
       <p>
         Clicking <strong>Save Model</strong> writes the same Trojan to disk as a pickle artifact —
-        the kind of file an ML pipeline might trust and load without inspection:
+        the kind of file an ML pipeline might trust and load without inspection
+        (saved under the app’s <code>downloads/</code> folder as
+        <code>malicious_bash_sentiment_model.pkl</code>).
       </p>
-      <pre><code>/Users/yash007/Downloads/owasp/PwnzzAI/downloads/malicious_bash_sentiment_model.pkl</code></pre>
       <figure class="shot">
-        <img src="../assets/lab4/6-os-model-path.png" alt="Saved malicious bash model pickle path after Save Model" />
-        <figcaption>Figure 6 — Saved artifact: <code>malicious_bash_sentiment_model.pkl</code> under <code>PwnzzAI/downloads/</code> — ready for offline scanning with tools like ModelScan</figcaption>
+        <img src="../assets/lab4/6-os-model-path.png?v=redacted" alt="Saved malicious bash model after Save Model with path redacted" />
+        <figcaption>Figure 6 — Saved artifact: <code>malicious_bash_sentiment_model.pkl</code> in the app <code>downloads/</code> directory — ready for offline scanning with tools like ModelScan</figcaption>
       </figure>
       <p>
         Swap those three commands for a reverse shell or credential harvest and the
