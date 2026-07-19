@@ -22,7 +22,7 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="lab-3-rag-poisoning.html" class="active">Latest</a>
+          <a href="lab-4-supply-chain.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
@@ -182,18 +182,16 @@
       </figure>
 
       <h2>6. Lab 2 vs Lab 3 — same category, different layer</h2>
-      <table class="content-table">
-        <thead>
-          <tr><th></th><th>Lab 2 (Training poisoning)</th><th>Lab 3 (RAG poisoning)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>When</td><td>Retrain / fine-tune time</td><td>Query time</td></tr>
-          <tr><td>What changes</td><td>Model coefficients</td><td>Retrieved context in prompt</td></tr>
-          <tr><td>Attack input</td><td>Mislabeled comments</td><td>Uploaded policy document</td></tr>
-          <tr><td>Detection</td><td>Weight flips, misclassification</td><td><code>userdoc_*</code> in retrieval + policy contradiction</td></tr>
-          <tr><td>Fix</td><td>Validate training data</td><td>Trusted-source filtering, ingestion ACLs</td></tr>
-        </tbody>
-      </table>
+      <p>
+        Both map to LLM04, but they hit different stages of the pipeline.
+      </p>
+      <ul class="content-list">
+        <li><strong>When</strong> — Lab 2: retrain / fine-tune time. Lab 3: query time.</li>
+        <li><strong>What changes</strong> — Lab 2: model coefficients. Lab 3: retrieved context in the prompt.</li>
+        <li><strong>Attack input</strong> — Lab 2: mislabeled comments. Lab 3: uploaded policy document.</li>
+        <li><strong>Detection</strong> — Lab 2: weight flips / misclassification. Lab 3: <code>userdoc_*</code> in retrieval + policy contradiction.</li>
+        <li><strong>Fix</strong> — Lab 2: validate training data. Lab 3: trusted-source filtering and ingestion ACLs.</li>
+      </ul>
 
       <h2>7. Defenses I would implement</h2>
       <ul class="content-list">

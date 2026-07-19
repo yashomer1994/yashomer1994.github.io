@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWASP PwnzzAI Lab 4: Supply Chain Vulnerability — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of OWASP PwnzzAI Lab 4 Supply Chain: malicious pickle models, XSS on load, and OS command execution via deserialization." />
+  <meta property="og:title" content="OWASP PwnzzAI Lab 4: Supply Chain Vulnerability — technical write-up" />
+  <meta property="og:description" content="How I demonstrated LLM03 supply-chain risk by loading Trojan sentiment models that inject XSS and run shell commands on deserialize." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/lab-4-supply-chain.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=lab4-detail" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="lab-4-supply-chain.html" class="active">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">July 19, 2026 · AI Security</p>
+      <h1>OWASP PwnzzAI Lab 4: Supply Chain Vulnerability — a technical write-up</h1>
+
+      <p>
+        Lab 4 in my
+        <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>
+        series covers <strong>Supply Chain Vulnerability</strong> —
+        <strong>LLM03:2025 Supply Chain</strong> in the
+        <a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a>.
+      </p>
+      <p>
+        Labs 2–3 attacked training data and RAG corpora. Lab 4 attacks the
+        <em>model artifact itself</em>: a “sentiment model” downloaded from an untrusted
+        source that runs malicious Python the moment it is instantiated or unpickled.
+      </p>
+
+      <h2>1. Threat model: models as executable code</h2>
+      <p>
+        Formats like <code>.pkl</code>, <code>.pt</code>, and <code>.pth</code> are often treated as
+        inert weight files. When an entire Python object is serialized (not just a
+        <code>state_dict</code>), loading it can execute arbitrary code in
+        <code>__init__</code>, <code>__reduce__</code>, or similar hooks.
+      </p>
+      <p>In PwnzzAI’s story:</p>
+      <ul class="content-list">
+        <li>The shop outsources AI and downloads a pre-trained sentiment model.</li>
+        <li>Staff load the file into the web app without scanning or sandboxing.</li>
+        <li>Malicious logic fires at import/instantiation — before any prediction call.</li>
+      </ul>
+      <figure class="shot">
+        <img src="../assets/lab4/1-title-description.png" alt="PwnzzAI Supply Chain Vulnerability lab overview" />
+        <figcaption>Figure 1 — Lab overview: pickle/torch deserialization framed as a Trojan-horse risk for AI pipelines</figcaption>
+      </figure>
+
+      <h2>2. Demo A — XSS via malicious model load</h2>
+      <p>
+        The first Trojan embeds a JavaScript payload and hooks Flask’s response cycle
+        (<code>after_this_request</code>) so HTML responses get
+        <code>&lt;script&gt;alert('XSS Vulnerability!');&lt;/script&gt;</code> injected
+        before <code>&lt;/body&gt;</code>.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab4/2-xss-malicious-code.png" alt="Malicious XSS sentiment model code in the lab UI" />
+        <figcaption>Figure 2 — XSS model design: payload stored on the class and injected into HTML responses when the model is loaded in a Flask context</figcaption>
+      </figure>
+      <p>
+        Clicking <strong>Load Malicious Model</strong> opens
+        <code>/demo-malicious-model</code>. Instantiating
+        <code>SentimentModel_JS_malicious</code> is enough to trigger the client-side alert:
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab4/3-xss-alert.png" alt="Browser alert showing XSS Vulnerability from malicious model" />
+        <figcaption>Figure 3 — Impact: browser alert fires on model load — a supply-chain XSS without touching the prediction API</figcaption>
+      </figure>
+      <p>
+        In a real product the same hook could steal cookies, rewrite checkout pages, or
+        exfiltrate session tokens. The “model” never needs to classify a single review.
+      </p>
+
+      <h2>3. Demo B — OS command execution on instantiate</h2>
+      <p>
+        The second Trojan runs shell commands inside <code>__init__</code> using
+        <code>subprocess.run</code>. Loading the object is the exploit:
+      </p>
+      <pre><code>cat /etc/passwd
+whoami
+uname -a</code></pre>
+      <figure class="shot">
+        <img src="../assets/lab4/4-os-malicious-code.png" alt="Malicious bash sentiment model code executing shell commands" />
+        <figcaption>Figure 4 — OS-attack model: dangerous commands listed in <code>__init__</code> and executed when the class is instantiated</figcaption>
+      </figure>
+      <p>
+        After <strong>Load Malicious Model</strong>, the lab surfaces the captured output:
+      </p>
+      <ul class="content-list">
+        <li><code>cat /etc/passwd</code> — account listing from the host</li>
+        <li><code>whoami</code> — process identity of the Flask app</li>
+        <li><code>uname -a</code> — kernel / architecture fingerprint</li>
+      </ul>
+      <figure class="shot">
+        <img src="../assets/lab4/5-os-command-results.png" alt="Command execution results from malicious model load" />
+        <figcaption>Figure 5 — Proof of RCE-class impact: command outputs returned after loading the bash Trojan model</figcaption>
+      </figure>
+      <p>
+        Clicking <strong>Save Model</strong> writes the same Trojan to disk as a pickle artifact —
+        the kind of file an ML pipeline might trust and load without inspection:
+      </p>
+      <pre><code>/Users/yash007/Downloads/owasp/PwnzzAI/downloads/malicious_bash_sentiment_model.pkl</code></pre>
+      <figure class="shot">
+        <img src="../assets/lab4/6-os-model-path.png" alt="Saved malicious bash model pickle path after Save Model" />
+        <figcaption>Figure 6 — Saved artifact: <code>malicious_bash_sentiment_model.pkl</code> under <code>PwnzzAI/downloads/</code> — ready for offline scanning with tools like ModelScan</figcaption>
+      </figure>
+      <p>
+        Swap those three commands for a reverse shell or credential harvest and the
+        demo becomes a full host compromise — still triggered by “just loading a model.”
+      </p>
+
+      <h2>4. Why this is LLM03, not LLM04</h2>
+      <p>
+        Same pizza shop, different failure mode. Labs 2–3 corrupt what the model
+        <em>learns from</em> or <em>retrieves</em>. Lab 4 corrupts the artifact you
+        <em>load</em>.
+      </p>
+      <ul class="content-list">
+        <li><strong>What is poisoned</strong> — Labs 2–3: training labels / RAG documents. Lab 4: model binary / package.</li>
+        <li><strong>When it fires</strong> — Labs 2–3: retrain or query-time retrieval. Lab 4: deserialize / import.</li>
+        <li><strong>Primary impact</strong> — Labs 2–3: wrong answers / flipped sentiment. Lab 4: XSS, RCE, persistence.</li>
+        <li><strong>Trust failure</strong> — Labs 2–3: unvalidated user content. Lab 4: untrusted third-party artifact.</li>
+      </ul>
+
+      <h2>5. Defenses I would implement</h2>
+      <ul class="content-list">
+        <li><strong>Prefer SafeTensors</strong> (or weight-only formats) over pickle for public models.</li>
+        <li><strong>Scan before load</strong> — tools like
+          <a href="https://github.com/protectai/modelscan" target="_blank" rel="noopener">ModelScan</a>
+          on every inbound artifact.</li>
+        <li><strong>Trusted sources only</strong> — signed releases, checksums, vendor allowlists.</li>
+        <li><strong>Never <code>trust_remote_code=True</code></strong> unless reviewed and pinned.</li>
+        <li><strong>Isolate loading</strong> in a disposable container/VM with no secrets mounted.</li>
+        <li><strong>Load <code>state_dict</code> only</strong> where possible — avoid deserializing full class objects.</li>
+      </ul>
+
+      <h2>6. What I demonstrated</h2>
+      <ul class="content-list">
+        <li>Threat modeling AI supply-chain risk around pickle/torch deserialization.</li>
+        <li>Client-side impact: XSS alert injected by instantiating a Trojan model.</li>
+        <li>Server-side impact: shell commands executed on model load with visible output.</li>
+        <li>Separating LLM03 (artifact trust) from LLM04 (data/RAG poisoning).</li>
+        <li>Mapping mitigations: SafeTensors, ModelScan, sandboxing, and source trust.</li>
+      </ul>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP/PwnzzAI</a></li>
+        <li><a href="https://genai.owasp.org/llmrisk/llm032025-supply-chain/" target="_blank" rel="noopener">OWASP Top 10 for LLMs — LLM03 Supply Chain</a></li>
+        <li><a href="https://owaspai.org/docs/3_development_time_threats/#313-supply-chain-model-poisoning" target="_blank" rel="noopener">OWASP AI Exchange — Supply chain model poisoning</a></li>
+        <li><a href="https://github.com/protectai/modelscan" target="_blank" rel="noopener">Protect AI ModelScan</a></li>
+        <li><a href="lab-3-rag-poisoning.html">Lab 3: RAG Poisoning write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="lab-3-rag-poisoning.html">Lab 3 →</a></p>
+    </div>
+  </main>
+</body>
+</html>
