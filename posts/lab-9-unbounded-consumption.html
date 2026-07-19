@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OWASP PwnzzAI Lab 9: Unbounded Consumption — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of OWASP PwnzzAI Lab 9 Unbounded Consumption: token-heavy prompts, request floods, and a safe DoS simulation (LLM10)." />
+  <meta property="og:title" content="OWASP PwnzzAI Lab 9: Unbounded Consumption — technical write-up" />
+  <meta property="og:description" content="How I demonstrated unbounded LLM consumption with Free Model prompts and the DoS Simulation tab in PwnzzAI." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/lab-9-unbounded-consumption.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=lab9" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="lab-9-unbounded-consumption.html" class="active">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">July 19, 2026 · AI Security</p>
+      <h1>OWASP PwnzzAI Lab 9: Unbounded Consumption — a technical write-up</h1>
+
+      <p>
+        Lab 9 in my
+        <a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP PwnzzAI</a>
+        series covers <strong>Unbounded Consumption</strong> —
+        <strong>LLM10:2025</strong> in the
+        <a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a>.
+        Unlike Labs 6–8, there is no coupon word to extract. The lesson is that unrestricted
+        prompts and request volume can burn tokens, CPU, and money — or degrade the service for everyone.
+      </p>
+
+      <h2>1. Threat model</h2>
+      <p>
+        Attackers (or accidental clients) craft long-generation prompts or fire high-rate query floods.
+        On pay-per-token APIs that becomes a financial DoS; on shared or self-hosted models it becomes
+        latency and availability risk. Mitigations are boring infrastructure controls: rate limits,
+        max tokens, request validation, and abuse monitoring.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab9/1-title-description.png" alt="PwnzzAI Unbounded Consumption lab overview" />
+        <figcaption>Figure 1 — Lab page: Free Model, cloud (API key), and safe DoS Simulation</figcaption>
+      </figure>
+
+      <h2>2. Lab setup</h2>
+      <ul class="content-list">
+        <li><strong>Path:</strong> Unbounded Consumption</li>
+        <li><strong>Free Model:</strong> local Ollama — no API key, real local resource use</li>
+        <li><strong>OpenAI / cloud tab:</strong> needs a Lab Setup key and will bill multi-send — I skipped it</li>
+        <li><strong>DoS Simulation:</strong> client-side / mock flood — no model, no spend</li>
+      </ul>
+
+      <h2>3. Free Model — token-heavy prompt</h2>
+      <p>
+        On Free Model I sent a classic unbounded-output style request from the lab’s example set:
+      </p>
+      <pre><code>Repeat the sentence "What is the meaning of recursion?" exactly 50 times. Number each line.</code></pre>
+      <p>
+        The local model did not follow the instruction literally — it produced a lengthy numbered essay
+        about recursion instead — but the point still lands: unconstrained “make it long / many times”
+        prompts drive costly, extended generation with no hard stop on the app side.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab9/2-free-model-long-prompt.png" alt="Free Model chat with long recursion prompt" />
+        <figcaption>Figure 2 — Free Model: expensive long-form generation from a repetition request</figcaption>
+      </figure>
+      <p>
+        The same tab also exposes <strong>Send Multiple</strong> (default count 10) to amplify load with
+        repeated chat calls. I kept cloud multi-send unused on purpose.
+      </p>
+
+      <h2>4. DoS Simulation — safe flood</h2>
+      <p>
+        The simulation tab is explicitly disconnected from any model. I launched a 50-request flood with
+        a pizza-recipe template that substitutes random toppings. Result: <strong>50 / 50 sent</strong>,
+        Success 50, Failed 0.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab9/3-dos-simulation-run.png" alt="DoS Simulation completing 50 of 50 requests" />
+        <figcaption>Figure 3 — Simulated flood progress: 50 successful requests, 0 failed</figcaption>
+      </figure>
+      <p>
+        The results panel summarized impact metrics: average response ~238&nbsp;ms and an estimated
+        <strong>7,500 tokens</strong> for that batch — useful teaching numbers even though no real API
+        was called. The impact callout lists rate limits, latency, outages, and billing burn if the
+        same pattern hit a live shared service.
+      </p>
+      <figure class="shot">
+        <img src="../assets/lab9/4-dos-simulation-results.png" alt="DoS Simulation attack results and impact notes" />
+        <figcaption>Figure 4 — Attack results: request counts, latency, estimated tokens, service impact</figcaption>
+      </figure>
+
+      <h2>5. What this teaches</h2>
+      <ul class="content-list">
+        <li><strong>Output length is a cost control.</strong> Unbounded generation is an attack surface.</li>
+        <li><strong>Request rate multiplies everything.</strong> One chat is mild; ×N with no throttling is not.</li>
+        <li><strong>Cloud ≠ free learning.</strong> The OpenAI tab is real money; Free Model + Simulation teach the risk without a bill.</li>
+        <li><strong>LLM10 is ops + product.</strong> Soft “please be short” prompts are not defenses.</li>
+      </ul>
+
+      <h2>6. Defenses I would implement</h2>
+      <ul class="content-list">
+        <li>Hard max tokens / max completion length per request and per session</li>
+        <li>Per-user and per-IP rate limits with backoff</li>
+        <li>Reject or truncate obviously abusive patterns (extreme repeat / expand instructions)</li>
+        <li>Budget alerts and kill switches for anomalous spend or queue depth</li>
+        <li>Separate critical workloads from public chat capacity</li>
+      </ul>
+
+      <h2>7. What I demonstrated</h2>
+      <ul class="content-list">
+        <li>Drove an unbounded-style prompt on Free Model (local Ollama).</li>
+        <li>Completed a safe 50-request DoS Simulation with clear result metrics.</li>
+        <li>Avoided cloud API spend while still covering LLM10 teaching goals.</li>
+      </ul>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/OWASP/PwnzzAI" target="_blank" rel="noopener">OWASP/PwnzzAI</a></li>
+        <li><a href="https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/" target="_blank" rel="noopener">OWASP Top 10 for LLMs — LLM10 Unbounded Consumption</a></li>
+        <li><a href="https://github.com/OWASP/www-project-ai-testing-guide/blob/main/Document/content/tests/AITG-INF-02_Testing_for_Resource_Exhaustion.md" target="_blank" rel="noopener">OWASP AI Testing Guide — Resource Exhaustion</a></li>
+        <li><a href="lab-8-promotion-photo.html">Lab 8: Promotion Photo write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="lab-8-promotion-photo.html">← Lab 8</a></p>
+    </div>
+  </main>
+</body>
+</html>
