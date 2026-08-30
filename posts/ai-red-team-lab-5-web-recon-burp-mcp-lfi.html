@@ -44,6 +44,16 @@
         AI-in-the-loop Burp workflow, ending in code execution as <code>www-data</code>.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Recon at scale</strong> — the chatbot orchestrates subfinder → katana → arjun → nuclei and the LLM grades the findings into risk levels and attack vectors.</li>
+        <li><strong>AI-in-the-loop exploitation</strong> — Burp captures the target's traffic; Claude, driving Burp over MCP, reviews the requests and identifies the LFI in <code>?search=</code>.</li>
+        <li><strong>LFI → file read</strong> — <code>?search=../../../../etc/passwd</code> confirms arbitrary read; <code>?search=logs/access.log</code> confirms the Apache log (inside the webroot) is readable.</li>
+        <li><strong>Log poisoning</strong> — a Repeater request with <code>User-Agent: &lt;?php system($_GET['cmd']); ?&gt;</code> plants PHP into the log verbatim.</li>
+        <li><strong>RCE</strong> — <code>?search=logs/access.log&amp;cmd=id</code> makes the server <code>include()</code> the poisoned log → command execution as <code>www-data</code>. Three primitives chained: file read → log write → code execution.</li>
+        <li><strong>Autonomous variant</strong> — the Recon+ pipeline runs the same idea without a human: 8 phases from discovery to an AI-prioritized attack plan (<code>/.env</code>, GraphQL hashes, SSH <code>root:admin123</code>, vsFTPd 2.3.4 backdoor).</li>
+      </ol>
+
       <h2>1. Exercise 1 — AI Web Recon chatbot</h2>
       <h3>1.1 Setup</h3>
       <pre><code>sudo apt install golang -y

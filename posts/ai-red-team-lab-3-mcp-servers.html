@@ -46,6 +46,15 @@
         and, on the flip side, an LLM autonomously chaining Mythic C2 tools from recon to objective.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Learn the tool standard</strong> — build the ControlledFS MCP server first: three tools, one sandbox, and the resolve-then-check pattern that keeps an LLM inside its lane.</li>
+        <li><strong>Probe the boundary</strong> — path-traversal and symlink prompts show what a sandboxed agent blocks, and the confused-deputy discussion shows what it can't.</li>
+        <li><strong>Hand the LLM real offensive tools</strong> — connect the Mythic C2 MCP server; the model can now see callbacks and task agents.</li>
+        <li><strong>Chain the operation</strong> — <code>start_pentest</code> persona → <code>get_all_agents</code> → <code>ad_recon</code>/<code>run_shell_command</code> → <code>privilege_escalation_peas</code> → <code>execute_mimikatz</code> → <code>run_as_user</code> → <code>run_sharphound</code>/<code>run_kerberoast</code> → objective (flag on DC01).</li>
+        <li><strong>Autonomy is the point</strong> — one natural-language objective ("emulate APT31, drop the flag on the DC") drives the whole chain without the operator naming a single command.</li>
+      </ol>
+
       <h2>1. Exercise 1 — ControlledFS-MCP (the defensive side)</h2>
       <h3>1.1 Setup</h3>
       <pre><code>cd Labs-3/ControlledFS-MCP

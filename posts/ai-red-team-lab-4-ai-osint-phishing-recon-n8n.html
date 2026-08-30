@@ -45,6 +45,15 @@
         OSINT fusion, and GitHub recon — driven entirely by a one-word LLM classification.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Start from a name</strong> — the OSINT workflow turns "Jane Doe from Acme" into LinkedIn/social profiles, org email addresses, and the company's email pattern (SerpAPI + Hunter.io).</li>
+        <li><strong>Weaponize the OSINT</strong> — the phishing workflow feeds the same collected data to a "seasoned social engineer" persona, producing a copy-paste-ready spear-phish personalized with the target's role and colleagues.</li>
+        <li><strong>Map the infrastructure in parallel</strong> — the Nmap-over-SSH workflow scans the target and the LLM turns raw ports into a vulnerability assessment with an explicit attack-path analysis and risk scoring.</li>
+        <li><strong>Fuse everything behind one chat</strong> — the capstone router classifies intent (SCAN / OSINT / GITHUB) in a single word and dispatches the right chain, including commit-email harvesting from GitHub metadata.</li>
+        <li><strong>The real-world chain this mirrors:</strong> recon (OSINT + scan) → weaponization (phish) → delivery → initial access — the front half of every intrusion, automated end-to-end.</li>
+      </ol>
+
       <h2>1. Setup (common to all exercises)</h2>
       <pre><code>docker volume create n8n_data
 docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n

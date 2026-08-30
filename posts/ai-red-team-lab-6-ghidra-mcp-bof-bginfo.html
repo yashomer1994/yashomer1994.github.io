@@ -45,6 +45,15 @@
         and a Microsoft-signed BGInfo turned into a fileless execution, reverse-shell, and exfiltration platform.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>AI-assisted triage</strong> — Ghidra MCP lets the LLM enumerate imports, symbols, and decompiled functions; it spots <code>gets()</code>/<code>strcpy()</code> and the three SIGSEGV handlers guarding the secret blobs.</li>
+        <li><strong>Vulnerability → offset</strong> — the stack buffer sits at <code>ebp-0xd4</code>, saved EIP at <code>ebp+4</code> → overwrite offset 216.</li>
+        <li><strong>The crash is the exploit</strong> — junk EIP (<code>0xdeadbeef</code>) triggers SIGSEGV; the installed handler XOR-decrypts the blob and writes it to stderr. No shellcode, no ROP.</li>
+        <li><strong>Break the cipher</strong> — the base64 hint leads to the encryption script; ROL1∘ROR1 cancels, so undoing SUB/ADD/XOR recovers <code>Flag{0v3rFl0WW_AlL_Th3_B7Ff3rS}</code>.</li>
+        <li><strong>LOLBIN weaponization</strong> — reversing BGInfo reveals UserFields type 4 = VBScript execution: malicious <code>.bgi</code> → fileless registry plant → WMI-spawned reverse shell (parented to <code>WmiPrvSE.exe</code>) → SMB "database" exfiltration that also captures the victim's NTLMv2 hash — all under a Microsoft-signed binary.</li>
+      </ol>
+
       <h2>1. Setup (common)</h2>
       <ol class="content-list">
         <li>Install Java JDK (Temurin), Ghidra 11.3.2, and the GhidraMCP 1.4 extension (Ghidra → File → Install Extensions → restart).</li>

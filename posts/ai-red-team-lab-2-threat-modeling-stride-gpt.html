@@ -47,6 +47,15 @@
         countermeasures, the offensive chain yields a full adversary-emulation plan from the same context.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Ingest real adversary tradecraft</strong> — upload the APT-Shadow Dragon CTI report; the pipeline extracts text and indexes it for retrieval.</li>
+        <li><strong>Map to MITRE ATT&amp;CK</strong> — regex + LLM extraction surfaces the techniques the actor actually used (T1566.001 phishing → T1053.005/T1547.001 persistence → T1003.001 LSASS dump → T1021.001 RDP → T1041 exfil).</li>
+        <li><strong>Flip the persona</strong> — the same context, re-prompted as a red teamer, explains <em>why</em> each technique works and which defensive gap it exploits.</li>
+        <li><strong>Generate the emulation plan</strong> — the scenario chain assembles a full kill chain: OSINT → macro spear-phish → persistence → credential theft → lateral movement → objective (fraudulent transfers).</li>
+        <li><strong>Model the target</strong> — STRIDE-GPT turns an architecture diagram into a threat model and attack tree, the planning step that precedes any engagement.</li>
+      </ol>
+
       <h2>1. Exercise 1 — SecOps Intelligence Hub</h2>
       <h3>1.1 Setup</h3>
       <pre><code>cd "Labs-2/File Analysis"

@@ -57,6 +57,21 @@
         only unconstrained-delegation computer.
       </div>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Collect once, query forever</strong> — SharpHound DCOnly collection ingested into BloodHound CE turns the whole domain into a queryable graph (35 users, 81 groups, 5 computers, PWRGRID.MGMT + PCN.CTRL).</li>
+        <li><strong>Baseline tier zero</strong> — the AI confirms Domain Admins contains only the built-in RID-500 account, so any non-standard route to domain control stands out immediately.</li>
+        <li><strong>Find the shortest path</strong> — natural-language path queries surface the critical edge: <code>EMP_USER@PWRGRID.MGMT</code> → <strong>GenericAll</strong> → domain object. GenericAll on the domain = DCSync rights.</li>
+        <li><strong>Execute the compromise</strong> — one command finishes the chain: <code>secretsdump.py EMP_USER@dc01 -just-dc</code> dumps every domain hash, including KRBTGT (golden ticket) and Administrator. One hop from a standard user to total domain compromise.</li>
+        <li><strong>Parallel paths worth reporting</strong> — the ESC1-pattern USER template on AD-CS01 (enroll a certificate as any user, including Administrator) and Account Operators' GenericAll over most users give the operator backup routes if the primary edge is remediated.</li>
+        <li><strong>Dead ends verified, not assumed</strong> — Kerberoasting is legitimately empty (only SPN is a gMSA), no AS-REP roastable users, no password-not-required accounts — the AI proves the negative space too.</li>
+      </ol>
+      <p>
+        This lab is the analytic mirror of the course's full kill chain (n8n recon → OSINT → Mythic phish →
+        BloodHound enumeration → domain dominance): here the AI's job is to <em>find</em> the exact
+        misconfigurations the earlier labs would exploit.
+      </p>
+
       <h2>1. Setup</h2>
       <h3>1.1 BloodHound CE</h3>
       <pre><code>tar -xzf bloodhound-cli-linux-amd64.tar.gz

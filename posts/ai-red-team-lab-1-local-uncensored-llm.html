@@ -43,6 +43,19 @@
         its serving stack, not of the prompt</em> — and a red teamer who controls the model controls the answers.
       </p>
 
+      <h2>Attack path (how the steps chain)</h2>
+      <ol class="content-list">
+        <li><strong>Attempt payload generation on a frontier model</strong> — ChatGPT refuses the reverse-shell prompt, proving guardrails are the first obstacle an attacker hits.</li>
+        <li><strong>Stand up an attacker-controlled model</strong> — pull Dolphin-LLaMA3 into Ollama; no logging, no API bill, no refusal policy.</li>
+        <li><strong>Expose it as a reusable endpoint</strong> — the FastAPI chat app turns the local model into a service any later tool (or lab) can call.</li>
+        <li><strong>Replay the refused prompt</strong> — the same payload request now succeeds, giving the operator on-demand offensive tooling.</li>
+        <li><strong>Cloud fallback</strong> — a Groq-hosted model with an anti-refusal system prompt provides the same capability when local hardware is unavailable.</li>
+      </ol>
+      <p>
+        This chain is the foundation for the whole series: Labs 3–7 all assume an LLM endpoint that will
+        answer offensive questions, and this lab is where that endpoint comes from.
+      </p>
+
       <h2>1. Why this lab exists</h2>
       <p>
         Every later lab assumes you have an LLM endpoint that will actually
