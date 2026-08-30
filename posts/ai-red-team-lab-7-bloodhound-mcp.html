@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>BloodHound CE</span><span>MCP</span><span>Active Directory</span><span>DCSync</span><span>AD CS</span><span>Cypher</span>
+      </div>
       <h1>AI Red Teaming Lab 7: BloodHound CE + MCP — AI-Driven AD Attack Path Analysis — a technical write-up</h1>
 
       <p>
@@ -39,6 +42,11 @@
         → GenericAll on Domain Admins → DC access); this lab is the graph-analytic mirror — teaching the AI to
         <em>find</em> exactly those misconfigurations.
       </p>
+      <div class="callout">
+        <strong>Key result:</strong> natural-language graph analysis uncovers a one-hop path to domain compromise —
+        <code>EMP_USER</code> holds GenericAll on the domain object (effective DCSync) — plus an ESC1-capable
+        certificate template.
+      </div>
 
       <h2>1. Setup</h2>
       <h3>1.1 BloodHound CE</h3>

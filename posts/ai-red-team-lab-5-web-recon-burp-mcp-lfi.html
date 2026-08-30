@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>Web Recon</span><span>Burp Suite</span><span>MCP</span><span>LFI</span><span>Log Poisoning</span><span>RCE</span><span>Docker</span>
+      </div>
       <h1>AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI Log Poisoning &amp; Recon+ Pipeline — a technical write-up</h1>
 
       <p>
@@ -36,6 +39,10 @@
         tools, a Burp Suite MCP integration used to exploit a real LFI→log-poisoning→RCE chain, and a fully
         autonomous 8-phase recon pipeline against a deliberately vulnerable Docker target.
       </p>
+      <div class="callout">
+        <strong>Key result:</strong> full LFI → Apache log poisoning → RCE chain executed through an
+        AI-in-the-loop Burp workflow, ending in code execution as <code>www-data</code>.
+      </div>
 
       <h2>1. Exercise 1 — AI Web Recon chatbot</h2>
       <h3>1.1 Setup</h3>

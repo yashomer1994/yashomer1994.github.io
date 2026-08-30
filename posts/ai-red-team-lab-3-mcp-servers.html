@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>MCP</span><span>FastMCP</span><span>Mythic C2</span><span>Sandboxing</span><span>Agentic AI</span>
+      </div>
       <h1>AI Red Teaming Lab 3: MCP Servers — ControlledFS &amp; Mythic C2 — a technical write-up</h1>
 
       <p>
@@ -38,6 +41,10 @@
         can operate compromised hosts. Together they teach both sides of agentic tooling: how to expose capabilities
         safely, and what happens when an LLM gets real offensive tools.
       </p>
+      <div class="callout">
+        <strong>Key result:</strong> a resolve-then-check sandbox that survives traversal and symlink tricks —
+        and, on the flip side, an LLM autonomously chaining Mythic C2 tools from recon to objective.
+      </div>
 
       <h2>1. Exercise 1 — ControlledFS-MCP (the defensive side)</h2>
       <h3>1.1 Setup</h3>

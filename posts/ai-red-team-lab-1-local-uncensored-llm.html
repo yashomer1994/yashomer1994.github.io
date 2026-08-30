@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>Ollama</span><span>Dolphin-LLaMA3</span><span>Groq</span><span>FastAPI</span><span>Flask</span><span>Guardrails</span>
+      </div>
       <h1>AI Red Teaming Lab 1: Local &amp; Uncensored LLM Setup — a technical write-up</h1>
 
       <p>
@@ -58,21 +61,29 @@
 
       <h2>2. Exercise 1 — Local LLM: Ollama + Dolphin + FastAPI</h2>
       <h3>2.1 Install and verify Ollama</h3>
-      <pre><code># Windows (PowerShell)
+      <figure class="term">
+        <div class="term-bar"><span></span><span></span><span></span></div>
+        <pre><span class="p"># Windows (PowerShell)</span>
 irm https://ollama.com/install.ps1 | iex
 
-# Linux
+<span class="p"># Linux</span>
 curl -fsSL https://ollama.com/install.sh | sh
 sudo systemctl start ollama &amp;&amp; sudo systemctl enable ollama
 
-# macOS: download from https://ollama.com (or brew install ollama)
+<span class="p"># macOS: download from https://ollama.com (or brew install ollama)</span>
 
-ollama --version   # verify</code></pre>
+ollama --version   <span class="p"># verify</span></pre>
+        <figcaption>Terminal — Ollama installation per platform</figcaption>
+      </figure>
 
       <h3>2.2 Pull and run the model</h3>
-      <pre><code>ollama pull dolphin-llama3     # ~4.7 GB download
-ollama run dolphin-llama3      # smoke-test in the terminal
-ollama list                    # confirm the model is present</code></pre>
+      <figure class="term">
+        <div class="term-bar"><span></span><span></span><span></span></div>
+        <pre>ollama pull dolphin-llama3     <span class="p"># ~4.7 GB download</span>
+ollama run dolphin-llama3      <span class="p"># smoke-test in the terminal</span>
+ollama list                    <span class="p"># confirm the model is present</span></pre>
+        <figcaption>Terminal — pulling and verifying dolphin-llama3</figcaption>
+      </figure>
 
       <h3>2.3 Run the web application</h3>
       <p>
@@ -86,6 +97,10 @@ ollama list                    # confirm the model is present</code></pre>
 source ./venv/bin/activate        # Windows: .\venv\Scripts\activate.bat
 pip install fastapi uvicorn requests
 uvicorn app:app --reload          # http://127.0.0.1:8000</code></pre>
+      <figure class="shot">
+        <img src="../assets/airt-lab1/dolphin-chat-ui.png" alt="Dolphin Chat web UI served by the FastAPI app" />
+        <figcaption>Figure 1 — The Dolphin Chat UI running against the local Ollama daemon</figcaption>
+      </figure>
 
       <h3>2.4 The guardrail comparison (the actual exercise)</h3>
       <p>
@@ -94,8 +109,13 @@ uvicorn app:app --reload          # http://127.0.0.1:8000</code></pre>
       </p>
       <figure class="shot">
         <img src="../assets/airt-lab1/dolphin-reverse-shell-response.png" alt="Dolphin Chat answering the reverse shell prompt that ChatGPT refused" />
-        <figcaption>Figure 1 — Same prompt, different stack: the local Dolphin instance answers the payload question that ChatGPT declines.</figcaption>
+        <figcaption>Figure 2 — Same prompt, different stack: the local Dolphin instance answers the payload question that ChatGPT declines.</figcaption>
       </figure>
+      <div class="callout">
+        <strong>Key result:</strong> identical prompt, two stacks. ChatGPT refuses by policy; the local
+        uncensored model complies. Guardrails live in the model/serving layer — whoever controls the
+        stack controls the answer.
+      </div>
       <p>
         Dolphin answered without refusal. One honest caveat: an 8B local model's
         <em>quality</em> is uneven — my run produced a rough bash one-liner rather than a polished

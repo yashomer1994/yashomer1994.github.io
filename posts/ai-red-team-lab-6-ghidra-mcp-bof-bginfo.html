@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>Ghidra</span><span>MCP</span><span>Buffer Overflow</span><span>LOLBIN</span><span>BGInfo</span><span>Reverse Engineering</span>
+      </div>
       <h1>AI Red Teaming Lab 6: Ghidra MCP — Beowulf BOF &amp; BGInfo as a LOLBIN — a technical write-up</h1>
 
       <p>
@@ -37,6 +40,10 @@
         Microsoft-signed Sysinternals <code>Bginfo.exe</code> and weaponizes it as a LOLBIN across four red-team
         exercises. This is the longest lab in the series — budget a full day.
       </p>
+      <div class="callout">
+        <strong>Key result:</strong> Beowulf flag recovered — <code>Flag{0v3rFl0WW_AlL_Th3_B7Ff3rS}</code> —
+        and a Microsoft-signed BGInfo turned into a fileless execution, reverse-shell, and exfiltration platform.
+      </div>
 
       <h2>1. Setup (common)</h2>
       <ol class="content-list">

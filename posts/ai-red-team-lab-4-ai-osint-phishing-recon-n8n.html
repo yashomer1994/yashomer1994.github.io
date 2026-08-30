@@ -29,6 +29,9 @@
       <hr class="header-rule" />
 
       <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
+      <div class="tags">
+        <span>n8n</span><span>OSINT</span><span>Phishing</span><span>Nmap</span><span>SerpAPI</span><span>Hunter.io</span><span>LLM Router</span>
+      </div>
       <h1>AI Red Teaming Lab 4: AI-Powered OSINT, Phishing Operations &amp; Network Recon — a technical write-up</h1>
 
       <p>
@@ -37,6 +40,10 @@
         Nmap scanning over SSH. No native n8n AI-agent nodes are used — every "agent" is a raw HTTP request to Groq's
         OpenAI-compatible endpoint with a carefully engineered system prompt. The prompt engineering <em>is</em> the lab content.
       </p>
+      <div class="callout">
+        <strong>Key result:</strong> a single chat interface that routes between Nmap scanning, multi-source
+        OSINT fusion, and GitHub recon — driven entirely by a one-word LLM classification.
+      </div>
 
       <h2>1. Setup (common to all exercises)</h2>
       <pre><code>docker volume create n8n_data
