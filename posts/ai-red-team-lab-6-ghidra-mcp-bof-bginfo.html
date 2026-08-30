@@ -61,6 +61,10 @@
         <li><code>pip install mcp requests</code>, then run the bridge: <code>python bridge_mcp_ghidra.py --transport sse</code> (leave running).</li>
         <li>Point Cursor/Claude Desktop at the bridge via the provided <code>claude_desktop_config.json</code> — <strong>fix the hardcoded path</strong> (<code>C:\Users\StealthOPS\...</code>) to your own. Green dot = connected.</li>
       </ol>
+      <figure class="shot">
+        <img src="../assets/airt-lab6/ghidra-project-codebrowser.jpg" alt="Ghidra project window with beowulf imported and the CodeBrowser open" />
+        <figcaption>Figure 1 — <code>beowulf</code> imported and analyzed in Ghidra 11.4 (ELF 32-bit i386), CodeBrowser open on the entry point.</figcaption>
+      </figure>
 
       <h2>2. Exercise 1 — Beowulf buffer overflow</h2>
       <h3>2.1 What the AI should find</h3>
@@ -70,6 +74,18 @@
         <li>The trick: no shellcode needed. Overwrite EIP with junk (<code>0xdeadbeef</code>) → SIGSEGV → the installed handler XOR-decrypts the secret blob and <code>write()</code>s it to stderr. <em>The crash is the exploit.</em></li>
         <li>A base64 hint in <code>.rodata</code> points to a pastebin with the full encryption script.</li>
       </ul>
+      <figure class="shot">
+        <img src="../assets/airt-lab6/ghidra-main-decompiled.jpg" alt="Ghidra decompiler showing main with mode selection and signal handler installs" />
+        <figcaption>Figure 2 — <code>main</code> decompiled: mode selection (<code>--flag/--algo/--sample</code>), each branch installing a <code>sigsegv_handler</code> before the vulnerable read.</figcaption>
+      </figure>
+      <p>The decompiled handler shows the whole trick — XOR-decrypt the blob, then <code>write()</code> it to stderr:</p>
+      <pre><code>void sigsegv_handler2(void) {
+  for (local_10 = 0; local_10 &lt; 0x621; local_10++) {
+    algo_d[local_10] = algo_d[local_10] ^ 8;   // in-place XOR decrypt
+  }
+  write(2, algo_d, strlen(algo_d));            // leak to stderr on crash
+  exit(1);
+}</code></pre>
       <h3>2.2 The AI prompt and PoC</h3>
       <p>Prompt: "I have decompiled the Beowulf file. Analyze the code, identify any security vulnerabilities, and generate a proof-of-concept (PoC) script demonstrating how the vulnerability could be exploited."</p>
       <pre><code>OFFSET = 216
