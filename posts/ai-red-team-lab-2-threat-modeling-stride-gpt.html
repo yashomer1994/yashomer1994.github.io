@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Red Teaming Lab 2: AI-Driven Threat Modeling &amp; STRIDE-GPT — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of AI Red Teaming Lab 2: CTI report ingestion, MITRE ATT&CK extraction, red team scenario generation with a Flask+Groq RAG app, and STRIDE-GPT threat modeling." />
+  <meta property="og:title" content="AI Red Teaming Lab 2: AI-Driven Threat Modeling &amp; STRIDE-GPT — technical write-up" />
+  <meta property="og:description" content="CTI ingestion, MITRE extraction, dual-persona (defender/attacker) analysis, and STRIDE-GPT threat modeling." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/ai-red-team-lab-2-threat-modeling-stride-gpt.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=dates-20260719" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">August 30, 2026 · AI Security</p>
+      <h1>AI Red Teaming Lab 2: AI-Driven Threat Modeling, Attack Planning &amp; STRIDE-GPT — a technical write-up</h1>
+
+      <p>
+        Lab 2 has two exercises. Exercise 1 is a Flask + Groq app ("SecOps Intelligence Hub") that ingests
+        CTI/DFIR PDF reports, extracts MITRE ATT&amp;CK techniques, and answers questions in two personas —
+        a defensive <strong>CTI Report mode</strong> and an offensive <strong>Red Team mode</strong>.
+        Exercise 2 uses <a href="https://github.com/mrwadams/stride-gpt" target="_blank" rel="noopener">STRIDE-GPT</a>
+        to generate a STRIDE threat model from an architecture diagram. The core lesson: <em>the same report
+        produces completely different output depending on the system prompt</em> — persona engineering is the tool.
+      </p>
+
+      <h2>1. Exercise 1 — SecOps Intelligence Hub</h2>
+      <h3>1.1 Setup</h3>
+      <pre><code>cd "Labs-2/File Analysis"
+python -m venv venv &amp;&amp; source ./venv/bin/activate
+pip install -r requirements.txt   # flask, langchain-groq, faiss-cpu, PyMuPDF, easyocr...
+# edit .env: GROQ_API_KEY=gsk_your_key
+python app.py                     # http://127.0.0.1:5000</code></pre>
+      <p>
+        Look for <code>[OK] GROQ_API_KEY loaded</code> at startup. The first PDF upload downloads the
+        <code>all-MiniLM-L6-v2</code> embedding model (~90 MB) — expect 30–120 s.
+      </p>
+
+      <h3>1.2 How the pipeline works (code walkthrough)</h3>
+      <ul class="content-list">
+        <li><code>app.py</code> — 4 endpoints: <code>/upload</code> (PDF → text → MITRE extraction → FAISS index), <code>/ask</code> (mode-routed Q&amp;A), <code>/scenario</code>, <code>/engagement</code>. Sessions live in an in-memory dict — a restart wipes them.</li>
+        <li><code>utils/pdf_reader.py</code> — 3-stage extraction: PyMuPDF → pypdf → EasyOCR for scanned PDFs.</li>
+        <li><code>mitre_map.py</code> — regex <code>T\d{4}(\.\d{3})?</code> over the text, with keyword-inference fallback. The hard-coded <code>MITRE_MAP</code> only names 7 techniques, so the upload summary shows "Unknown Technique" for the rest — the LLM still names them correctly in chat.</li>
+        <li><code>chains.py</code> — the teaching artifact: six LangChain chains on <code>llama-3.1-8b-instant</code>. CTI chains run at temperature 0.2 (factual/defensive), Red chains at 0.6 (creative/offensive). Same context, opposite objectives.</li>
+        <li><code>graph.py</code> — an alternative LangGraph pipeline (not wired into the routes) that does true top-4 retrieval RAG with <code>llama-3.3-70b-versatile</code>. Good contrast with <code>app.py</code>'s full-context stuffing.</li>
+      </ul>
+
+      <h3>1.3 Solution steps</h3>
+      <ol class="content-list">
+        <li><strong>Upload</strong> <code>uploads/CTI Report - APT-Shadow Dragon.pdf</code> in Report Ingestion.</li>
+        <li><strong>CTI mode, Prompt 1:</strong> "Extract all MITRE ATT&amp;CK technique IDs mentioned or implied in this report."</li>
+        <li><strong>Red Team mode, Prompt 1:</strong> "Explain why each technique is effective and what security gap it exploits."</li>
+        <li><strong>Scenario generation:</strong> click Generate (Red mode) or ask for a full attack scenario with initial access → persistence → lateral movement → objectives.</li>
+        <li><strong>Optional:</strong> <code>/engagement</code> with an industry parameter (e.g. "banking") for a tailored plan.</li>
+      </ol>
+
+      <h3>1.4 Expected results (APT-Shadow Dragon report)</h3>
+      <p>Regex extraction should surface the kill-chain techniques:</p>
+      <ul class="content-list">
+        <li><strong>Recon:</strong> T1589 (Gather Victim Identity), T1594 (Search Victim-Owned Websites)</li>
+        <li><strong>Initial Access:</strong> T1566.001/.002 (Spearphishing Attachment/Link)</li>
+        <li><strong>Persistence:</strong> T1053.005 (Scheduled Task), T1547.001 (Registry Run Keys)</li>
+        <li><strong>Cred Access / PrivEsc:</strong> T1003.001 (LSASS Memory)</li>
+        <li><strong>Lateral Movement:</strong> T1021.001 (RDP)</li>
+        <li><strong>Discovery:</strong> T1083, T1135 · <strong>Exfil:</strong> T1041 · <strong>Impact:</strong> T1657 (Financial Theft)</li>
+      </ul>
+      <p>
+        Red Team mode should explain the gaps: T1566.001 exploits the human layer, T1003.001 exploits missing
+        Credential Guard/EDR, T1021.001 exploits flat networks, T1041 exploits absent egress monitoring.
+        The generated scenario chains OSINT → macro-laden spear-phish → DracoNet install → scheduled-task/run-key
+        persistence → LSASS dump → RDP/WMI lateral movement → SWIFT terminal discovery → HTTPS exfil → fraudulent transfers.
+      </p>
+
+      <h2>2. Exercise 2 — STRIDE-GPT</h2>
+      <pre><code>git clone https://github.com/mrwadams/stride-gpt.git
+cd stride-gpt &amp;&amp; python -m venv venv &amp;&amp; source ./venv/bin/activate
+pip install -r requirements.txt
+streamlit run main.py             # http://localhost:8501</code></pre>
+      <p>
+        Fill in the app metadata for the provided <code>Desktop application threat model diagram.png</code>
+        (desktop app, no auth, not internet-facing, processes sensitive user files), upload the diagram, and
+        generate the threat model + attack tree. The diagram is a simple trust model: User ↔ Desktop App ↔ File System.
+      </p>
+      <p>Expected STRIDE output for this diagram:</p>
+      <ul class="content-list">
+        <li><strong>Spoofing:</strong> no launch authentication; malicious file masquerading as a trusted document.</li>
+        <li><strong>Tampering:</strong> binary/config modification on disk; crafted input files abusing the parser.</li>
+        <li><strong>Repudiation:</strong> no audit logging — actions and file changes are unattributable.</li>
+        <li><strong>Information Disclosure:</strong> insecure temp files, world-readable permissions, crash dumps.</li>
+        <li><strong>DoS:</strong> malformed input crashing the parser; decompression bombs; file locking/deletion.</li>
+        <li><strong>EoP:</strong> file-parsing exploit → code exec as the user; DLL hijacking via writable load paths.</li>
+      </ul>
+      <p>Typical mitigations generated: code signing, least-privilege execution, sandboxed parsing, secure file permissions, audit logging, signed auto-updates.</p>
+
+      <h2>3. Troubleshooting</h2>
+      <ul class="content-list">
+        <li>401 errors → placeholder still in <code>.env</code>, or venv not activated.</li>
+        <li>Groq 429 rate limits → wait ~60 s; avoid re-uploading in a loop (this is why LLM-based MITRE inference is commented out in <code>mitre_map.py</code>).</li>
+        <li>"Invalid session" → server restarted; re-upload the PDF.</li>
+        <li>Port 5000 busy on macOS → disable AirPlay Receiver or change the port.</li>
+        <li>Fresh Python 3.13/3.14 + <code>faiss-cpu</code>/<code>easyocr</code> wheel issues → use Python 3.10–3.12.</li>
+      </ul>
+
+      <h2>4. Effort estimate (for lab timing)</h2>
+      <p>
+        Ex 1: 30–45 min setup + 45–60 min execution. Ex 2: 15–20 min setup + 30–45 min execution, plus ~30 min
+        of documentation. <strong>Total: ~2.5–3.5 hours</strong> for a first-time student; ~1.5 hours with prepared environments.
+      </p>
+    </div>
+  </main>
+</body>
+</html>

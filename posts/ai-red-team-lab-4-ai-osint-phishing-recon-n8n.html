@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Red Teaming Lab 4: AI-Powered OSINT, Phishing &amp; Recon with n8n — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of AI Red Teaming Lab 4: four n8n workflows — AI OSINT reports, targeted phishing generation, AI-analyzed Nmap scans over SSH, and an all-in-one LLM router agent." />
+  <meta property="og:title" content="AI Red Teaming Lab 4: AI-Powered OSINT, Phishing &amp; Recon with n8n — technical write-up" />
+  <meta property="og:description" content="Node-by-node solutions for the four n8n AI workflows: OSINT, phishing, Nmap analysis, and the agentic router." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/ai-red-team-lab-4-ai-osint-phishing-recon-n8n.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=dates-20260719" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">August 30, 2026 · AI Security</p>
+      <h1>AI Red Teaming Lab 4: AI-Powered OSINT, Phishing Operations &amp; Network Recon — a technical write-up</h1>
+
+      <p>
+        Lab 4 builds AI-augmented offensive automation in <a href="https://n8n.io" target="_blank" rel="noopener">n8n</a>:
+        four chat-driven workflows that combine LLM calls (Groq) with OSINT APIs (SerpAPI, Hunter.io) and remote
+        Nmap scanning over SSH. No native n8n AI-agent nodes are used — every "agent" is a raw HTTP request to Groq's
+        OpenAI-compatible endpoint with a carefully engineered system prompt. The prompt engineering <em>is</em> the lab content.
+      </p>
+
+      <h2>1. Setup (common to all exercises)</h2>
+      <pre><code>docker volume create n8n_data
+docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
+# open http://localhost:5678, create owner account
+# Workflows → Import from File → each exercise JSON</code></pre>
+      <p>
+        Keys needed: <strong>Groq</strong> (console.groq.com), <strong>SerpAPI</strong>, <strong>Hunter.io</strong>.
+        The shipped JSONs contain hardcoded lab keys inline in HTTP node URLs/headers — replace them with your own
+        (and treat this as a teaching moment about secret management: use n8n Credentials, rotate exposed keys).
+        For Ex 3/4 create an <strong>SSH Password credential</strong> for a host with <code>nmap</code> (a Kali VM is ideal)
+        and select it on the Nmap nodes — the shipped credential IDs are placeholders.
+        Finally, toggle each workflow to <strong>Active</strong> so the chat webhook responds.
+      </p>
+
+      <h2>2. Exercise 1 — AI OSINT pipeline</h2>
+      <p>
+        Flow: Chat Trigger → <strong>Parse Target Input</strong> (JS: strips command verbs, extracts name + company via
+        "X from Y" regex, guesses <code>company.com</code> domain) → three parallel collectors → aggregate → Groq report.
+      </p>
+      <ul class="content-list">
+        <li><strong>LinkedIn Search</strong> (SerpAPI): Google-dork <code>site:linkedin.com &lt;name&gt; &lt;company&gt;</code>.</li>
+        <li><strong>Social Media Search</strong> (SerpAPI): twitter/facebook/instagram dorks.</li>
+        <li><strong>Hunter.io</strong>: domain-search → org emails, names, positions, and the email pattern.</li>
+        <li><strong>Aggregate OSINT Data</strong>: try/catch per source so one failing API doesn't kill the run.</li>
+        <li><strong>AI OSINT Report</strong> (<code>llama-3.3-70b-versatile</code>): "Red Team OSINT specialist" prompt — raw clickable URLs, list EVERY discovered email (never guess), state the pattern, produce Executive Summary / Target Footprint / Emails / Suggested Attack Vectors.</li>
+      </ul>
+      <p><strong>Input:</strong> <code>osint on Sundar Pichai from Google</code> · <strong>Output:</strong> a formatted report with profile URLs, org email list + pattern, and social-engineering attack vectors.</p>
+
+      <h2>3. Exercise 2 — OSINT → targeted phishing</h2>
+      <p>
+        Same collection half, but the LLM is prompted as a <em>"seasoned social engineer"</em>: write ONE highly
+        targeted phishing email with a compelling subject, using psychological triggers (urgency, authority, curiosity),
+        no introductory text. A Merge node (<code>mergeByPosition</code>) joins the three sources, and the output is
+        wrapped in a "Targeted Phishing Payload Generated" block with an authorized-use watermark.
+        <strong>Expected:</strong> a copy-paste-ready spear-phish personalized with the target's role, company context,
+        and colleagues discovered via OSINT.
+      </p>
+
+      <h2>4. Exercise 3 — AI-analyzed Nmap scan</h2>
+      <p>
+        Linear pipeline: Chat → Parse Target (IPv4 regex → domain → last token) → <strong>SSH node</strong> running
+        <code>nmap -Pn -sV -T4 &lt;target&gt;</code> on the remote host → Prepare AI Body → Groq
+        (<code>llama-3.1-8b-instant</code>, temp 0.2) with an elite-pentester system prompt demanding an exact skeleton:
+        Executive Summary, Open Ports table, per-port Vulnerability Assessment (Risk / Attack Surface / MITRE ATT&amp;CK /
+        CVEs / Remediation), Attack Path Analysis, Risk Score Matrix (X/10), Top-5 Actions.
+      </p>
+      <p><strong>Input:</strong> <code>scan scanme.nmap.org</code> · <strong>Output:</strong> a structured pentest-style report. Lab quirk: the parsed <code>scanType</code> ("verbose") is never used downstream — a workflow limitation, not student error.</p>
+
+      <h2>5. Exercise 4 — All-in-One agentic router (~30 nodes)</h2>
+      <p>
+        The capstone: an LLM acts as an <strong>intent router</strong>. A cheap classification call
+        (<code>llama-3.3-70b-versatile</code>) answers exactly one word — <code>SCAN</code>, <code>OSINT</code>, or
+        <code>GITHUB</code> — and a Switch node dispatches:
+      </p>
+      <ul class="content-list">
+        <li><strong>SCAN branch:</strong> robust target parser; normal (<code>nmap -sV -sC -oX -</code>) vs aggressive (<code>sudo nmap -sV -O -A -T4 -p- -oX -</code>) over SSH; XML parsed to JSON; script output surfaced for <code>tcpwrapped</code> ports; Groq analysis with "do not hallucinate" rules.</li>
+        <li><strong>OSINT branch:</strong> multi-stage fusion — employee LinkedIn search, company social search, Hunter.io, then chained LLM stages: per-source analysis → company profile → intelligence aggregator (fusion engine: dedupe, entity extraction, confidence scoring) → unified Red Team assessment.</li>
+        <li><strong>GITHUB branch:</strong> username extraction → repo listing → per-repo README fetch + commit history → <strong>commit-email harvesting</strong> (filters noreply addresses — a real OSINT technique for leaking personal emails from git metadata) → conversational AI analysis.</li>
+      </ul>
+      <p><strong>Inputs:</strong> <code>aggressive scan example.com</code> · <code>research Jane Doe from Acme</code> · <code>analyze github torvalds</code>.</p>
+
+      <h2>6. Key insights</h2>
+      <ul class="content-list">
+        <li>Model choices are deliberate: 70B for routing/report writing, 8B for fast scan/GitHub summarization; temperatures 0.2–0.3 on analysis to reduce hallucination.</li>
+        <li>Nmap-over-SSH decouples the scanner from n8n — the Docker container never needs nmap installed.</li>
+        <li><code>-oX -</code> XML-to-stdout + n8n's XML node makes results machine-parseable before the LLM sees them (Ex 4), vs raw text in Ex 3.</li>
+        <li>Anti-hallucination prompt rules in Ex 4 ("Not found in provided data", "no exploitation steps") are production-grade patterns worth reusing.</li>
+      </ul>
+
+      <h2>7. Troubleshooting</h2>
+      <ul class="content-list">
+        <li>Chat not responding → workflow not Active; use the Chat Trigger's hosted URL.</li>
+        <li>401/403 → replace the shared hardcoded keys in every HTTP node (search the canvas for groq/serpapi/hunter).</li>
+        <li>SSH fails → create your own SSH credential and select it on the Nmap nodes; verify nmap + sudo on the target host.</li>
+        <li>Hunter returns nothing → the domain is guessed as <code>&lt;company&gt;.com</code>; type the real domain.</li>
+        <li>Router misclassification → the Switch uses <code>contains</code> matching; use clear keywords ("scan", "github", "research").</li>
+        <li>GitHub rate limits → unauthenticated API is 60 req/hr; add a token header for repo-heavy users.</li>
+      </ul>
+
+      <h2>8. Effort estimate (for lab timing)</h2>
+      <p>
+        Setup 30–45 min · Ex 1 30–45 min · Ex 2 20–30 min · Ex 3 45–60 min (SSH credential is the usual blocker) ·
+        Ex 4 60–90 min. <strong>Total: ~3–4 hours.</strong> All outputs are watermarked "FOR AUTHORIZED USE ONLY" —
+        targets must be consenting (scanme.nmap.org, lab VMs, own org with written authorization).
+      </p>
+    </div>
+  </main>
+</body>
+</html>

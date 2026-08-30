@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Red Teaming Lab 7: BloodHound CE + MCP — AI-Driven AD Attack Path Analysis — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of AI Red Teaming Lab 7: installing BloodHound CE, ingesting SharpHound data, deploying the BloodHound MCP server, and driving AD attack-path analysis with natural language." />
+  <meta property="og:title" content="AI Red Teaming Lab 7: BloodHound CE + MCP — technical write-up" />
+  <meta property="og:description" content="BloodHound CE + MCP: natural-language AD attack-path analysis against the PWRGRID.MGMT dataset." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/ai-red-team-lab-7-bloodhound-mcp.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=dates-20260719" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">August 30, 2026 · AI Security</p>
+      <h1>AI Red Teaming Lab 7: BloodHound CE + MCP — AI-Driven AD Attack Path Analysis — a technical write-up</h1>
+
+      <p>
+        The final lab wires <strong>BloodHound CE</strong> into Claude Desktop through the BloodHound-MCP server,
+        exposing ~60 pre-built Cypher queries as MCP tools so the LLM performs natural-language Active Directory
+        attack-path analysis. The companion "AI Attack Reference" doc walks a full AI-assisted kill chain against
+        <code>oco-ai.local</code> (n8n recon → OSINT → Mythic phishing payload → BloodHound enumeration → Kerberoast
+        → GenericAll on Domain Admins → DC access); this lab is the graph-analytic mirror — teaching the AI to
+        <em>find</em> exactly those misconfigurations.
+      </p>
+
+      <h2>1. Setup</h2>
+      <h3>1.1 BloodHound CE</h3>
+      <pre><code>tar -xzf bloodhound-cli-linux-amd64.tar.gz
+sudo ./bloodhound-cli install    # UI on http://localhost:8080; save the initial admin password</code></pre>
+      <p>
+        ⚠️ The shipped CLI is <strong>linux-amd64</strong> — on macOS/Windows download the matching build
+        (<code>bloodhound-cli-darwin-arm64</code>, <code>windows-amd64.exe</code>) from the BloodHound CE releases;
+        everything else is identical. Docker needs ~4 GB RAM; verify <code>docker ps</code> shows
+        <code>bloodhound</code>, <code>graph-db</code>, <code>app-db</code>.
+      </p>
+      <h3>1.2 Ingest the dataset</h3>
+      <p>
+        Unzip <code>Data to ingest in Bloodhound.zip</code> — 13 SharpHound v2.12 JSONs, DCOnly collection for
+        <strong>PWRGRID.MGMT</strong>. In the UI: Administration → Data Ingest → File Ingest → upload all 13 → wait for
+        Complete. Sanity check: 35 users, 101 groups, 5 computers (DC01, OFFICE-MAC, DB-SRV, EXCH, AD-CS01).
+      </p>
+      <h3>1.3 MCP server + Claude Desktop</h3>
+      <pre><code>7z x Bloodhound_MCP.7z &amp;&amp; cd BloodHound-MCP-AI-main
+pip install -r requirements.txt    # neo4j, python-dotenv, mcp-server, fastmcp</code></pre>
+      <p>
+        Configure <code>claude_desktop_config.json</code> from the lab template — fix the <code>uv</code> path
+        (<code>/snap/bin/uv</code> only exists on the lab Ubuntu image; use <code>which uv</code>) and set env:
+        <code>BLOODHOUND_URI=bolt://localhost:7687</code>, user <code>neo4j</code>, password
+        <code>bloodhoundcommunityedition</code> (the <em>Neo4j</em> password, not the BH UI admin password — the classic
+        gotcha). Fully restart Claude Desktop; ~60 <code>find_*</code> tools should appear.
+      </p>
+
+      <h2>2. Analyst prompts and expected answers (from the actual dataset)</h2>
+      <ol class="content-list">
+        <li><strong>Domain overview:</strong> PWRGRID.MGMT — 35 users, 101 groups, 5 computers (AD-CS01 is an enterprise CA).</li>
+        <li><strong>Domain Admins</strong> (<code>find_all_domain_admins</code>): only built-in ADMINISTRATOR (RID 500) — clean tier zero, so any non-standard path is suspicious.</li>
+        <li><strong>Shortest path to DA — the key finding:</strong> <code>EMP_USER@PWRGRID.MGMT</code> has <strong>GenericAll directly on the domain object</strong> = effective DCSync rights → one hop to total compromise (<code>secretsdump.py EMP_USER@dc01 -just-dc</code>). Also note Account Operators → GenericAll on most users (default, but a useful primitive).</li>
+        <li><strong>Kerberoastable users:</strong> <em>empty</em> — deliberately. The only SPN account is <code>GMSA_SRV$</code>, a group Managed Service Account (120+ char machine-managed password), which every canned query excludes. Lesson: "no kerberoastable users" ≠ "no SPN accounts" — verify with raw Cypher <code>MATCH (u:User) WHERE u.hasspn=true RETURN u</code>.</li>
+        <li><strong>AS-REP roastable:</strong> none.</li>
+        <li><strong>AD CS:</strong> the default <strong>USER</strong> template matches the ESC1 pattern (enrollee supplies subject, client auth, no manager approval) — if Domain Users can enroll via AD-CS01, any user can mint a certificate as Administrator. ESC8 not indicated (<code>hasvulnerableendpoint</code> unset).</li>
+        <li><strong>Delegation:</strong> only DC01 has unconstrained delegation (normal for DCs).</li>
+        <li><strong>Hygiene:</strong> 14 disabled accounts (all normal: KRBTGT, Exchange health mailboxes...), no password-not-required accounts.</li>
+        <li><strong>Executive report prompt:</strong> the AI should lead with (1) EMP_USER GenericAll-on-domain (critical), (2) ESC1-capable USER template (high), (3) Account Operators GenericAll (medium), (4) clean Kerberos posture.</li>
+      </ol>
+
+      <h2>3. Key code insights (BloodHound-MCP.py)</h2>
+      <ul class="content-list">
+        <li>Single-file FastMCP server over stdio; one shared Neo4j driver with <code>encrypted=False</code> (BH CE's Neo4j has no TLS).</li>
+        <li>Dual-database fallback: every query tries <code>neo4j</code> then <code>bloodhound</code> — the fix for the classic "connects but returns nothing" bug.</li>
+        <li><code>query_bloodhound(query)</code> is a generic escape hatch for arbitrary Cypher — powerful, and worth flagging as a sensitive interface outside a lab.</li>
+        <li>Canned queries mirror the BH CE prebuilt-searches catalog (dangerous privileges, Kerberos, shortest paths, AD CS, NTLM relay, hygiene, plus an Azure/Entra section that returns empty on this on-prem dataset).</li>
+        <li>RID-suffix filtering (<code>objectid ENDS WITH '-512'</code>) makes queries SID- and language-agnostic; every query has a LIMIT so the LLM context isn't flooded.</li>
+      </ul>
+
+      <h2>4. Troubleshooting</h2>
+      <ul class="content-list">
+        <li><code>exec format error</code> → wrong bloodhound-cli architecture (the big one for Mac/Windows students).</li>
+        <li>Server "running" but every tool errors → Neo4j password mismatch; test standalone with the env vars set.</li>
+        <li>Ingesting the zip instead of the individual JSONs; renaming SharpHound files.</li>
+        <li>Empty results misread as "broken" → DCOnly collection has no sessions/local-admin edges; kerberoastable is legitimately empty (gMSA).</li>
+        <li>Port conflicts on 7687/7474/8080 with a local Neo4j.</li>
+        <li>Claude config: fully quit Claude Desktop after editing; watch for the trailing comma in the lab's sample file.</li>
+      </ul>
+
+      <h2>5. Effort estimate (for lab timing)</h2>
+      <p>
+        Install + first login 20–30 min · ingestion 10 min · MCP config/debugging 20–40 min · guided analysis + report
+        45–60 min. <strong>Total: ~1.5–2.5 hours</strong> (add ~30 min on macOS/Windows for the CLI architecture issue).
+      </p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Red Teaming Lab 1: Local &amp; Uncensored LLM Setup — Technical Write-up — Yash Omer</title>
+  <meta name="description" content="Technical write-up of AI Red Teaming Lab 1: standing up a local Dolphin uncensored LLM with Ollama, a Groq-hosted uncensored chatbot, and comparing guardrail behavior against ChatGPT." />
+  <meta property="og:title" content="AI Red Teaming Lab 1: Local &amp; Uncensored LLM Setup — technical write-up" />
+  <meta property="og:description" content="Ollama + Dolphin-LLaMA3 local setup, Groq uncensored chatbot, and a guardrail comparison against ChatGPT." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yashomer1994.github.io/posts/ai-red-team-lab-1-local-uncensored-llm.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css?v=dates-20260719" />
+</head>
+<body>
+  <main>
+    <div class="content">
+      <header class="site-header">
+        <p>
+          <a href="../index.html" class="brand">yashomer1994.github.io</a><span class="cursor" aria-hidden="true">▮</span>
+        </p>
+        <nav>
+          <a href="../index.html">Home</a>
+          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
+        </nav>
+      </header>
+      <hr class="header-rule" />
+
+      <p class="meta">August 30, 2026 · AI Security</p>
+      <h1>AI Red Teaming Lab 1: Local &amp; Uncensored LLM Setup — a technical write-up</h1>
+
+      <p>
+        This is the first lab in our AI-based red teaming course. It has two exercises:
+        standing up a <strong>local uncensored LLM</strong> (Dolphin-LLaMA3 via Ollama, wrapped in a
+        small FastAPI chat app) and a <strong>cloud-hosted uncensored chatbot</strong>
+        (Groq's <code>llama-3.1-8b-instant</code> behind a Flask app with an adversarial system prompt).
+        The teaching point is simple but foundational: <em>guardrails are a property of the model and
+        its serving stack, not of the prompt</em> — and a red teamer who controls the model controls the answers.
+      </p>
+
+      <h2>1. Why this lab exists (trainer's framing)</h2>
+      <p>
+        Every later lab in the course assumes the student has an LLM endpoint that will actually
+        answer offensive-security questions. Frontier hosted models (ChatGPT, Claude) refuse
+        payload-generation requests by design. The lab demonstrates this refusal first, then shows
+        two ways around it that are legitimate in a lab context:
+      </p>
+      <ol class="content-list">
+        <li><strong>Run your own model locally</strong> — Dolphin is a fine-tune of LLaMA with reduced refusals. No API bill, no logging, fully offline.</li>
+        <li><strong>Use a permissively-prompted hosted model</strong> — Groq serves open weights fast; a crafted system prompt suppresses refusal behavior.</li>
+      </ol>
+      <p>
+        Hardware guidance from the course docs: 7B models need 8–12 GB RAM, 13B needs 16–24 GB,
+        70B needs 64+ GB. On my M-series MacBook, <code>dolphin-llama3</code> (8B, ~4.7 GB) runs comfortably.
+      </p>
+
+      <h2>2. Exercise 1 — Local LLM: Ollama + Dolphin + FastAPI</h2>
+      <h3>2.1 Install and verify Ollama</h3>
+      <pre><code># Windows (PowerShell)
+irm https://ollama.com/install.ps1 | iex
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+sudo systemctl start ollama &amp;&amp; sudo systemctl enable ollama
+
+# macOS: download from https://ollama.com (or brew install ollama)
+
+ollama --version   # verify</code></pre>
+
+      <h3>2.2 Pull and run the model</h3>
+      <pre><code>ollama pull dolphin-llama3     # ~4.7 GB download
+ollama run dolphin-llama3      # smoke-test in the terminal
+ollama list                    # confirm the model is present</code></pre>
+
+      <h3>2.3 Run the web application</h3>
+      <p>
+        The app (<code>dolphin-web/app.py</code>) is a thin FastAPI wrapper: it accepts
+        <code>POST /chat</code> with a JSON <code>{"message": "..."}</code> body and forwards it to the
+        local Ollama daemon at <code>http://localhost:11434/api/generate</code> with
+        <code>"model": "dolphin-llama3:latest"</code> and <code>"stream": false</code>, then serves a
+        single-page chat UI from <code>static/</code>.
+      </p>
+      <pre><code>python -m venv venv
+source ./venv/bin/activate        # Windows: .\venv\Scripts\activate.bat
+pip install fastapi uvicorn requests
+uvicorn app:app --reload          # http://127.0.0.1:8000</code></pre>
+
+      <h3>2.4 The guardrail comparison (the actual exercise)</h3>
+      <p>
+        Step 5 of the lab asks ChatGPT directly: <em>"generate the reverse shell payload for the
+        linux machine"</em>. ChatGPT refuses — this is the expected, documented outcome and students
+        should screenshot it. Step 6 repeats the identical prompt against the local Dolphin app.
+      </p>
+      <figure class="shot">
+        <img src="../assets/airt-lab1/dolphin-reverse-shell-response.png" alt="Dolphin Chat answering the reverse shell prompt that ChatGPT refused" />
+        <figcaption>Figure 1 — Same prompt, different stack: the local Dolphin instance answers the payload question that ChatGPT declines. (Captured live from my run of the lab on macOS.)</figcaption>
+      </figure>
+      <p>
+        Dolphin answered without refusal. Note the honest caveat for students: an 8B local model's
+        <em>quality</em> is uneven — my run produced a rough bash one-liner rather than a polished
+        msfvenom-style payload. The lesson is about <strong>control and refusal behavior</strong>, not
+        output quality. For better output, students can iterate with more specific prompts
+        (LHOST/LPORT, payload format, encoder constraints).
+      </p>
+
+      <h2>3. Exercise 2 — Cloud "uncensored" chatbot: Groq + Flask</h2>
+      <p>
+        The second app (<code>Uncensored LLM/main.py</code>) uses Groq's hosted
+        <code>llama-3.1-8b-instant</code> with a system prompt that explicitly forbids refusal phrases
+        ("I can't", "I cannot", "not allowed", "illegal", "malicious"...) and instructs the model to
+        answer "directly, concisely, and technically" with no disclaimers.
+      </p>
+      <pre><code>python -m venv venv
+source ./venv/bin/activate
+pip install flask groq
+# paste your Groq API key into main.py line 6
+python main.py                    # http://127.0.0.1:5000</code></pre>
+      <p>
+        Get a Groq API key from <a href="https://groq.com" target="_blank" rel="noopener">groq.com</a>
+        → API Keys → Create. The interesting discussion point for the writeup: this exercise shows that
+        <strong>safety behavior on hosted open-weight models is largely system-prompt deep</strong>. The
+        same weights refuse or comply depending on the serving instructions — which is exactly why
+        system-prompt leakage and override are real attack surface (revisited in later labs).
+      </p>
+
+      <h2>4. Troubleshooting (what students actually hit)</h2>
+      <ul class="content-list">
+        <li><code>ollama list</code> errors → the daemon isn't running; start the Ollama app or <code>ollama serve</code>.</li>
+        <li>App returns <code>Ollama error: {...}</code> → model tag mismatch; the code expects <code>dolphin-llama3:latest</code>.</li>
+        <li>Groq 401 → key not pasted or pasted with quotes/whitespace on line 6 of <code>main.py</code>.</li>
+        <li>Slow first response → model is being loaded into memory; subsequent turns are fast.</li>
+        <li>Windows venv activation fails in PowerShell → run <code>Set-ExecutionPolicy -Scope Process RemoteSigned</code> first.</li>
+      </ul>
+
+      <h2>5. Effort estimate (for lab timing)</h2>
+      <p>
+        As the trainer I completed Exercise 1 end-to-end on a fresh machine in
+        <strong>~35 minutes</strong> (including the 4.7 GB model download at ~40 MB/s) and Exercise 2 in
+        <strong>~15 minutes</strong>. A student following the docs for the first time should budget
+        <strong>1.5 hours</strong> for Lab 1 including the writeup screenshots. No prior knowledge assumed
+        beyond basic Python/virtualenv.
+      </p>
+
+      <h2>6. Defensive takeaways</h2>
+      <ul class="content-list">
+        <li>Refusals are a policy layer, not a capability limit — assume adversaries run uncensored local models.</li>
+        <li>System prompts are not a security boundary; anything they "forbid" can be re-permitted by whoever controls the stack.</li>
+        <li>Egress monitoring and payload execution controls matter more than hoping the attacker's chatbot says no.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

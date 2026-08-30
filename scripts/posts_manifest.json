@@ -1,5 +1,40 @@
 [
   {
+    "slug": "ai-red-team-lab-1-local-uncensored-llm",
+    "title": "AI Red Teaming Lab 1: Local & Uncensored LLM Setup",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-2-threat-modeling-stride-gpt",
+    "title": "AI Red Teaming Lab 2: AI-Driven Threat Modeling & STRIDE-GPT",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-3-mcp-servers",
+    "title": "AI Red Teaming Lab 3: MCP Servers — ControlledFS & Mythic C2",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-4-ai-osint-phishing-recon-n8n",
+    "title": "AI Red Teaming Lab 4: AI-Powered OSINT, Phishing & Recon with n8n",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-5-web-recon-burp-mcp-lfi",
+    "title": "AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI & Recon Pipeline",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-6-ghidra-mcp-bof-bginfo",
+    "title": "AI Red Teaming Lab 6: Ghidra MCP — Beowulf BOF & BGInfo LOLBIN",
+    "date": "2026-08-30"
+  },
+  {
+    "slug": "ai-red-team-lab-7-bloodhound-mcp",
+    "title": "AI Red Teaming Lab 7: BloodHound CE + MCP",
+    "date": "2026-08-30"
+  },
+  {
     "slug": "android-hidden-api-restrictions",
     "title": "Android Hidden API Restrictions",
     "date": "2021-04-11"
