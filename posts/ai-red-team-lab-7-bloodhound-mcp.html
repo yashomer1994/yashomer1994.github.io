@@ -104,6 +104,12 @@ pip install -r requirements.txt    # neo4j, python-dotenv, mcp-server, fastmcp</
         <li><strong>Domain overview:</strong> PWRGRID.MGMT — 35 users, 81 groups, 5 computers (AD-CS01 is an enterprise CA). The ingest also contains a second domain object, <code>PCN.CTRL</code> — worth asking the AI about.</li>
         <li><strong>Domain Admins</strong> (<code>find_all_domain_admins</code>): only built-in ADMINISTRATOR (RID 500) — clean tier zero, so any non-standard path is suspicious.</li>
         <li><strong>Shortest path to DA — the key finding:</strong> <code>EMP_USER@PWRGRID.MGMT</code> has <strong>GenericAll directly on the domain object</strong> = effective DCSync rights → one hop to total compromise (<code>secretsdump.py EMP_USER@dc01 -just-dc</code>). Also note Account Operators → GenericAll on most users (default, but a useful primitive).</li>
+      </ol>
+      <figure class="shot">
+        <img src="../assets/airt-lab7/emp-user-genericall-domain.png" alt="Graph view of EMP_USER holding a GenericAll edge directly on the PWRGRID.MGMT domain object" />
+        <figcaption>Figure 1 — The one-hop path to domain compromise, queried live from the ingested dataset: <code>EMP_USER@PWRGRID.MGMT</code> —[GenericAll]→ <code>PWRGRID.MGMT</code>. GenericAll on the domain object grants DCSync-equivalent rights.</figcaption>
+      </figure>
+      <ol class="content-list" start="4">
         <li><strong>Kerberoastable users:</strong> <em>empty</em> — deliberately. The only SPN account is <code>GMSA_SRV$</code>, a group Managed Service Account (120+ char machine-managed password), which every canned query excludes. Lesson: "no kerberoastable users" ≠ "no SPN accounts" — verify with raw Cypher <code>MATCH (u:User) WHERE u.hasspn=true RETURN u</code>.</li>
         <li><strong>AS-REP roastable:</strong> none.</li>
         <li><strong>AD CS:</strong> the default <strong>USER</strong> template matches the ESC1 pattern (enrollee supplies subject, client auth, no manager approval) — if Domain Users can enroll via AD-CS01, any user can mint a certificate as Administrator. ESC8 not indicated (<code>hasvulnerableendpoint</code> unset).</li>
