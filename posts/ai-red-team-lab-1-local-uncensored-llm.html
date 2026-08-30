@@ -153,16 +153,7 @@ python main.py                    # http://127.0.0.1:5000</code></pre>
         <li>Windows venv activation fails in PowerShell → run <code>Set-ExecutionPolicy -Scope Process RemoteSigned</code> first.</li>
       </ul>
 
-      <h2>5. Time it took me</h2>
-      <p>
-        I completed Exercise 1 end-to-end on a fresh machine in
-        <strong>~35 minutes</strong> (including the 4.7 GB model download at ~40 MB/s) and Exercise 2 in
-        <strong>~15 minutes</strong>. Following the docs for the first time, budget
-        <strong>~1.5 hours</strong> for Lab 1 including screenshots for the report. No prior knowledge needed
-        beyond basic Python/virtualenv.
-      </p>
-
-      <h2>6. Defensive takeaways</h2>
+      <h2>5. Defensive takeaways</h2>
       <ul class="content-list">
         <li>Refusals are a policy layer, not a capability limit — assume adversaries run uncensored local models.</li>
         <li>System prompts are not a security boundary; anything they "forbid" can be re-permitted by whoever controls the stack.</li>
