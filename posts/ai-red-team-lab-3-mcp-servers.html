@@ -22,13 +22,13 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 3: MCP Servers — ControlledFS &amp; Mythic C2 — a technical write-up</h1>
 
       <p>
@@ -135,17 +135,27 @@ uv run main.py &lt;mythic_user&gt; &lt;mythic_password&gt; &lt;mythic_host&gt; 7
       <h2>3. Troubleshooting</h2>
       <ul class="content-list">
         <li>No tools in Claude → bad path in config, non-absolute interpreter, or JSON syntax error; check <code>~/Library/Logs/Claude/mcp*.log</code>.</li>
-        <li>The sample config in <code>test</code> contains the course author's Windows path — replace it wholesale.</li>
+        <li>The sample config in <code>test</code> contains the lab author's Windows path — replace it wholesale.</li>
         <li>Mythic login failures → wrong port (7443), version drift between the <code>mythic</code> PyPI package and server, or 2FA on the account.</li>
         <li>Empty agent list → no active callbacks; detonate a payload first.</li>
         <li>SharpHound/PEAS "file not found" → pre-stage the binary / supply base64 yourself.</li>
       </ul>
 
-      <h2>4. Effort estimate (for lab timing)</h2>
+      <h2>4. Time it took me</h2>
       <p>
-        Setup 60–90 min (Mythic install dominates; ~30 min if a range is pre-provided), Ex 1 30–45 min,
-        Ex 2 60–90 min, writeup 30 min. <strong>Total: ~3–4 hours</strong> new to MCP; ~2 hours with a pre-built Mythic environment.
+        Setup took 60–90 min (the Mythic install dominates; ~30 min with a pre-built range), Ex 1 took 30–45 min,
+        Ex 2 took 60–90 min, plus 30 min of writeup. <strong>Total: ~3–4 hours</strong> new to MCP; ~2 hours with
+        a pre-built Mythic environment.
       </p>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a></li>
+        <li><a href="https://github.com/its-a-feature/Mythic" target="_blank" rel="noopener">Mythic C2</a></li>
+        <li><a href="ai-red-team-lab-4-ai-osint-phishing-recon-n8n.html">Lab 4: AI-Powered OSINT, Phishing &amp; Recon write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-2-threat-modeling-stride-gpt.html">← Lab 2</a> · <a href="ai-red-team-lab-4-ai-osint-phishing-recon-n8n.html">Lab 4 →</a></p>
     </div>
   </main>
 </body>

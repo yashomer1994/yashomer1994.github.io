@@ -22,13 +22,13 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 1: Local &amp; Uncensored LLM Setup — a technical write-up</h1>
 
       <p>
@@ -40,9 +40,9 @@
         its serving stack, not of the prompt</em> — and a red teamer who controls the model controls the answers.
       </p>
 
-      <h2>1. Why this lab exists (trainer's framing)</h2>
+      <h2>1. Why this lab exists</h2>
       <p>
-        Every later lab in the course assumes the student has an LLM endpoint that will actually
+        Every later lab assumes you have an LLM endpoint that will actually
         answer offensive-security questions. Frontier hosted models (ChatGPT, Claude) refuse
         payload-generation requests by design. The lab demonstrates this refusal first, then shows
         two ways around it that are legitimate in a lab context:
@@ -52,7 +52,7 @@
         <li><strong>Use a permissively-prompted hosted model</strong> — Groq serves open weights fast; a crafted system prompt suppresses refusal behavior.</li>
       </ol>
       <p>
-        Hardware guidance from the course docs: 7B models need 8–12 GB RAM, 13B needs 16–24 GB,
+        Hardware guidance from the lab docs: 7B models need 8–12 GB RAM, 13B needs 16–24 GB,
         70B needs 64+ GB. On my M-series MacBook, <code>dolphin-llama3</code> (8B, ~4.7 GB) runs comfortably.
       </p>
 
@@ -90,18 +90,17 @@ uvicorn app:app --reload          # http://127.0.0.1:8000</code></pre>
       <h3>2.4 The guardrail comparison (the actual exercise)</h3>
       <p>
         Step 5 of the lab asks ChatGPT directly: <em>"generate the reverse shell payload for the
-        linux machine"</em>. ChatGPT refuses — this is the expected, documented outcome and students
-        should screenshot it. Step 6 repeats the identical prompt against the local Dolphin app.
+        linux machine"</em>. ChatGPT refuses — the expected, documented outcome; screenshot it for the report. Step 6 repeats the identical prompt against the local Dolphin app.
       </p>
       <figure class="shot">
         <img src="../assets/airt-lab1/dolphin-reverse-shell-response.png" alt="Dolphin Chat answering the reverse shell prompt that ChatGPT refused" />
-        <figcaption>Figure 1 — Same prompt, different stack: the local Dolphin instance answers the payload question that ChatGPT declines. (Captured live from my run of the lab on macOS.)</figcaption>
+        <figcaption>Figure 1 — Same prompt, different stack: the local Dolphin instance answers the payload question that ChatGPT declines.</figcaption>
       </figure>
       <p>
-        Dolphin answered without refusal. Note the honest caveat for students: an 8B local model's
+        Dolphin answered without refusal. One honest caveat: an 8B local model's
         <em>quality</em> is uneven — my run produced a rough bash one-liner rather than a polished
         msfvenom-style payload. The lesson is about <strong>control and refusal behavior</strong>, not
-        output quality. For better output, students can iterate with more specific prompts
+        output quality. For better output, iterate with more specific prompts
         (LHOST/LPORT, payload format, encoder constraints).
       </p>
 
@@ -125,7 +124,7 @@ python main.py                    # http://127.0.0.1:5000</code></pre>
         system-prompt leakage and override are real attack surface (revisited in later labs).
       </p>
 
-      <h2>4. Troubleshooting (what students actually hit)</h2>
+      <h2>4. Troubleshooting (what actually goes wrong)</h2>
       <ul class="content-list">
         <li><code>ollama list</code> errors → the daemon isn't running; start the Ollama app or <code>ollama serve</code>.</li>
         <li>App returns <code>Ollama error: {...}</code> → model tag mismatch; the code expects <code>dolphin-llama3:latest</code>.</li>
@@ -134,12 +133,12 @@ python main.py                    # http://127.0.0.1:5000</code></pre>
         <li>Windows venv activation fails in PowerShell → run <code>Set-ExecutionPolicy -Scope Process RemoteSigned</code> first.</li>
       </ul>
 
-      <h2>5. Effort estimate (for lab timing)</h2>
+      <h2>5. Time it took me</h2>
       <p>
-        As the trainer I completed Exercise 1 end-to-end on a fresh machine in
+        I completed Exercise 1 end-to-end on a fresh machine in
         <strong>~35 minutes</strong> (including the 4.7 GB model download at ~40 MB/s) and Exercise 2 in
-        <strong>~15 minutes</strong>. A student following the docs for the first time should budget
-        <strong>1.5 hours</strong> for Lab 1 including the writeup screenshots. No prior knowledge assumed
+        <strong>~15 minutes</strong>. Following the docs for the first time, budget
+        <strong>~1.5 hours</strong> for Lab 1 including screenshots for the report. No prior knowledge needed
         beyond basic Python/virtualenv.
       </p>
 
@@ -149,6 +148,15 @@ python main.py                    # http://127.0.0.1:5000</code></pre>
         <li>System prompts are not a security boundary; anything they "forbid" can be re-permitted by whoever controls the stack.</li>
         <li>Egress monitoring and payload execution controls matter more than hoping the attacker's chatbot says no.</li>
       </ul>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a></li>
+        <li><a href="https://groq.com" target="_blank" rel="noopener">Groq</a></li>
+        <li><a href="ai-red-team-lab-2-threat-modeling-stride-gpt.html">Lab 2: AI-Driven Threat Modeling &amp; STRIDE-GPT write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-2-threat-modeling-stride-gpt.html">Lab 2 →</a></p>
     </div>
   </main>
 </body>

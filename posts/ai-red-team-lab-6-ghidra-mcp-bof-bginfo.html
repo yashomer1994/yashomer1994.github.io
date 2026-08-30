@@ -22,20 +22,20 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 6: Ghidra MCP — Beowulf BOF &amp; BGInfo as a LOLBIN — a technical write-up</h1>
 
       <p>
         Lab 6 connects an LLM to Ghidra via MCP so the AI can decompile and query binaries live. Exercise 1 uses it
         to analyze and exploit a vulnerable 32-bit ELF (<code>beowulf</code>). Exercise 2 reverse-engineers the
         Microsoft-signed Sysinternals <code>Bginfo.exe</code> and weaponizes it as a LOLBIN across four red-team
-        exercises. This is the longest lab in the course — budget a full day.
+        exercises. This is the longest lab in the series — budget a full day.
       </p>
 
       <h2>1. Setup (common)</h2>
@@ -71,7 +71,7 @@ output = p.recvall(timeout=2)                   # handler prints secret to stder
       <pre><code>[+] Flag : Flag{0v3rFl0WW_AlL_Th3_B7Ff3rS}</code></pre>
       <p>
         Pitfalls: <code>beowulf</code> is a <strong>Linux</strong> 32-bit binary (needs <code>libc6-i386</code>; won't run on
-        Windows/macOS); <code>BOF.py</code> hardcodes <code>./vuln_binary</code> — rename or edit; students assuming 64-bit
+        Windows/macOS); <code>BOF.py</code> hardcodes <code>./vuln_binary</code> — rename or edit; assuming 64-bit
         get the offset wrong.
       </p>
 
@@ -100,11 +100,20 @@ output = p.recvall(timeout=2)                   # handler prints secret to stder
         <li>Planted HKCU keys persist across reboots — always run <code>--cleanup</code> and delete the scheduled task.</li>
       </ul>
 
-      <h2>5. Effort estimate (for lab timing)</h2>
+      <h2>5. Time it took me</h2>
       <p>
-        Setup 45–60 min · Ex 1 75–105 min (PoC + cipher reversal) · Ex 2 research 45–60 min · Ex 4.2 45 min ·
-        4.3/4.4 30 min · 4.5 45–60 min · 4.6 30–45 min. <strong>Total: ≈ 5–6.5 hours</strong> — the course's full-day lab.
+        Setup took 45–60 min · Ex 1 75–105 min (PoC + cipher reversal) · Ex 2 research 45–60 min · Ex 4.2 45 min ·
+        4.3/4.4 30 min · 4.5 45–60 min · 4.6 30–45 min. <strong>Total: ≈ 5–6.5 hours</strong> — a full-day lab.
       </p>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/NationalSecurityAgency/ghidra" target="_blank" rel="noopener">Ghidra</a> · <a href="https://github.com/LaurieWired/GhidraMCP" target="_blank" rel="noopener">GhidraMCP</a></li>
+        <li><a href="https://learn.microsoft.com/sysinternals/downloads/bginfo" target="_blank" rel="noopener">Sysinternals BGInfo</a></li>
+        <li><a href="ai-red-team-lab-7-bloodhound-mcp.html">Lab 7: BloodHound CE + MCP write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-5-web-recon-burp-mcp-lfi.html">← Lab 5</a> · <a href="ai-red-team-lab-7-bloodhound-mcp.html">Lab 7 →</a></p>
     </div>
   </main>
 </body>

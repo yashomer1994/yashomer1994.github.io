@@ -22,13 +22,13 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 4: AI-Powered OSINT, Phishing Operations &amp; Network Recon — a technical write-up</h1>
 
       <p>
@@ -46,7 +46,7 @@ docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n
       <p>
         Keys needed: <strong>Groq</strong> (console.groq.com), <strong>SerpAPI</strong>, <strong>Hunter.io</strong>.
         The shipped JSONs contain hardcoded lab keys inline in HTTP node URLs/headers — replace them with your own
-        (and treat this as a teaching moment about secret management: use n8n Credentials, rotate exposed keys).
+        (worth fixing properly: use n8n Credentials, rotate exposed keys).
         For Ex 3/4 create an <strong>SSH Password credential</strong> for a host with <code>nmap</code> (a Kali VM is ideal)
         and select it on the Nmap nodes — the shipped credential IDs are placeholders.
         Finally, toggle each workflow to <strong>Active</strong> so the chat webhook responds.
@@ -84,7 +84,7 @@ docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n
         Executive Summary, Open Ports table, per-port Vulnerability Assessment (Risk / Attack Surface / MITRE ATT&amp;CK /
         CVEs / Remediation), Attack Path Analysis, Risk Score Matrix (X/10), Top-5 Actions.
       </p>
-      <p><strong>Input:</strong> <code>scan scanme.nmap.org</code> · <strong>Output:</strong> a structured pentest-style report. Lab quirk: the parsed <code>scanType</code> ("verbose") is never used downstream — a workflow limitation, not student error.</p>
+      <p><strong>Input:</strong> <code>scan scanme.nmap.org</code> · <strong>Output:</strong> a structured pentest-style report. Lab quirk: the parsed <code>scanType</code> ("verbose") is never used downstream — a workflow limitation, not your error.</p>
 
       <h2>5. Exercise 4 — All-in-One agentic router (~30 nodes)</h2>
       <p>
@@ -117,12 +117,22 @@ docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n
         <li>GitHub rate limits → unauthenticated API is 60 req/hr; add a token header for repo-heavy users.</li>
       </ul>
 
-      <h2>8. Effort estimate (for lab timing)</h2>
+      <h2>8. Time it took me</h2>
       <p>
-        Setup 30–45 min · Ex 1 30–45 min · Ex 2 20–30 min · Ex 3 45–60 min (SSH credential is the usual blocker) ·
-        Ex 4 60–90 min. <strong>Total: ~3–4 hours.</strong> All outputs are watermarked "FOR AUTHORIZED USE ONLY" —
-        targets must be consenting (scanme.nmap.org, lab VMs, own org with written authorization).
+        Setup took 30–45 min · Ex 1 30–45 min · Ex 2 20–30 min · Ex 3 45–60 min (the SSH credential was the
+        blocker) · Ex 4 60–90 min. <strong>Total: ~3–4 hours.</strong> All outputs are watermarked
+        "FOR AUTHORIZED USE ONLY" — targets must be consenting (scanme.nmap.org, lab VMs, own org with
+        written authorization).
       </p>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://n8n.io" target="_blank" rel="noopener">n8n</a></li>
+        <li><a href="https://serpapi.com" target="_blank" rel="noopener">SerpAPI</a> · <a href="https://hunter.io" target="_blank" rel="noopener">Hunter.io</a></li>
+        <li><a href="ai-red-team-lab-5-web-recon-burp-mcp-lfi.html">Lab 5: AI Web Recon, Burp MCP LFI &amp; Recon Pipeline write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-3-mcp-servers.html">← Lab 3</a> · <a href="ai-red-team-lab-5-web-recon-burp-mcp-lfi.html">Lab 5 →</a></p>
     </div>
   </main>
 </body>

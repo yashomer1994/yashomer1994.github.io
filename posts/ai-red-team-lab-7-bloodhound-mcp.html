@@ -22,13 +22,13 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 7: BloodHound CE + MCP — AI-Driven AD Attack Path Analysis — a technical write-up</h1>
 
       <p>
@@ -91,7 +91,7 @@ pip install -r requirements.txt    # neo4j, python-dotenv, mcp-server, fastmcp</
 
       <h2>4. Troubleshooting</h2>
       <ul class="content-list">
-        <li><code>exec format error</code> → wrong bloodhound-cli architecture (the big one for Mac/Windows students).</li>
+        <li><code>exec format error</code> → wrong bloodhound-cli architecture (the big one on Mac/Windows).</li>
         <li>Server "running" but every tool errors → Neo4j password mismatch; test standalone with the env vars set.</li>
         <li>Ingesting the zip instead of the individual JSONs; renaming SharpHound files.</li>
         <li>Empty results misread as "broken" → DCOnly collection has no sessions/local-admin edges; kerberoastable is legitimately empty (gMSA).</li>
@@ -99,11 +99,21 @@ pip install -r requirements.txt    # neo4j, python-dotenv, mcp-server, fastmcp</
         <li>Claude config: fully quit Claude Desktop after editing; watch for the trailing comma in the lab's sample file.</li>
       </ul>
 
-      <h2>5. Effort estimate (for lab timing)</h2>
+      <h2>5. Time it took me</h2>
       <p>
-        Install + first login 20–30 min · ingestion 10 min · MCP config/debugging 20–40 min · guided analysis + report
-        45–60 min. <strong>Total: ~1.5–2.5 hours</strong> (add ~30 min on macOS/Windows for the CLI architecture issue).
+        Install + first login took 20–30 min · ingestion 10 min · MCP config/debugging 20–40 min · guided
+        analysis + report 45–60 min. <strong>Total: ~1.5–2.5 hours</strong> (add ~30 min on macOS/Windows for
+        the CLI architecture issue).
       </p>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://github.com/SpecterOps/BloodHound" target="_blank" rel="noopener">BloodHound CE</a></li>
+        <li><a href="https://posts.specterops.io" target="_blank" rel="noopener">SpecterOps blog</a></li>
+        <li><a href="ai-red-team-lab-1-local-uncensored-llm.html">Lab 1: Local &amp; Uncensored LLM Setup write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-6-ghidra-mcp-bof-bginfo.html">← Lab 6</a></p>
     </div>
   </main>
 </body>

@@ -22,13 +22,13 @@
         </p>
         <nav>
           <a href="../index.html">Home</a>
-          <a href="ai-red-team-lab-1-local-uncensored-llm.html">Latest</a>
+          <a href="ai-red-team-lab-7-bloodhound-mcp.html">Latest</a>
           <button type="button" class="theme-toggle" id="theme-toggle">Dark</button>
         </nav>
       </header>
       <hr class="header-rule" />
 
-      <p class="meta">August 30, 2026 · AI Security</p>
+      <p class="meta">August 30, 2026 · Offensive Cyber Operations with AI</p>
       <h1>AI Red Teaming Lab 5: AI Web Recon, Burp MCP LFI Log Poisoning &amp; Recon+ Pipeline — a technical write-up</h1>
 
       <p>
@@ -85,7 +85,7 @@ docker compose up -d --build       # target at http://localhost:5000</code></pre
         <li>Trigger RCE: <code>?search=logs/access.log&amp;cmd=id</code> → <code>uid=33(www-data) gid=33(www-data)</code> embedded in the page. That output is the lab's proof/flag.</li>
       </ol>
       <p>
-        Note: the shipped <code>access.log</code> is pre-poisoned so the demo always works — students should still
+        Note: the shipped <code>access.log</code> is pre-poisoned so the demo always works — still perform
         perform the poisoning step themselves. Also <code>index.php</code>'s <code>basename()</code> blocks traversal
         in <code>page=</code> but explicitly passes <code>php://filter</code> through — a lesson in partial sanitization.
       </p>
@@ -122,11 +122,20 @@ python3 cli.py localhost</code></pre>
         <li>Ex 3: install <code>seclists</code> or Phase 4 is skipped; target must be up before running <code>cli.py</code>; empty AI panels → bad Groq key (pipeline still completes with tool data).</li>
       </ul>
 
-      <h2>5. Effort estimate (for lab timing)</h2>
+      <h2>5. Time it took me</h2>
       <p>
-        Ex 1 ~1 h · Ex 2 ~1.5 h (Burp MCP config + the full chain) · Ex 3 ~1.25 h.
+        Ex 1 took ~1 h · Ex 2 ~1.5 h (Burp MCP config + the full chain) · Ex 3 ~1.25 h.
         <strong>Total: ~3.5–4.5 hours</strong> including troubleshooting.
       </p>
+
+      <h2>References</h2>
+      <ul class="content-list">
+        <li><a href="https://portswigger.net/burp" target="_blank" rel="noopener">Burp Suite</a></li>
+        <li><a href="https://github.com/projectdiscovery" target="_blank" rel="noopener">ProjectDiscovery tools</a></li>
+        <li><a href="ai-red-team-lab-6-ghidra-mcp-bof-bginfo.html">Lab 6: Ghidra MCP — Beowulf BOF &amp; BGInfo LOLBIN write-up</a></li>
+      </ul>
+
+      <p class="footer-nav"><a href="../index.html">← Home</a> · <a href="ai-red-team-lab-4-ai-osint-phishing-recon-n8n.html">← Lab 4</a> · <a href="ai-red-team-lab-6-ghidra-mcp-bof-bginfo.html">Lab 6 →</a></p>
     </div>
   </main>
 </body>
