@@ -148,7 +148,7 @@ python main.py                    # http://127.0.0.1:5000</code></pre>
       <ul class="content-list">
         <li><code>ollama list</code> errors → the daemon isn't running; start the Ollama app or <code>ollama serve</code>.</li>
         <li>App returns <code>Ollama error: {...}</code> → model tag mismatch; the code expects <code>dolphin-llama3:latest</code>.</li>
-        <li>Groq 401 → key not pasted or pasted with quotes/whitespace on line 6 of <code>main.py</code>.</li>
+        <li>Groq 401 → key not pasted or pasted with quotes/whitespace. Note: the shared lab keys floating around the course workflows are revoked — generate your own.</li>
         <li>Slow first response → model is being loaded into memory; subsequent turns are fast.</li>
         <li>Windows venv activation fails in PowerShell → run <code>Set-ExecutionPolicy -Scope Process RemoteSigned</code> first.</li>
       </ul>

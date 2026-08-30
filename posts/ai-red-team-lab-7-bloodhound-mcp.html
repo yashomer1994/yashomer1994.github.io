@@ -47,6 +47,15 @@
         <code>EMP_USER</code> holds GenericAll on the domain object (effective DCSync) — plus an ESC1-capable
         certificate template.
       </div>
+      <div class="callout">
+        <strong>Verified live:</strong> every answer in this write-up was confirmed by executing the Cypher queries
+        against a real BloodHound CE instance (Docker) with the lab dataset ingested — 35 users, 81 groups,
+        5 computers, domains PWRGRID.MGMT and PCN.CTRL; <code>EMP_USER@PWRGRID.MGMT</code> confirmed to hold
+        GenericAll on the domain; the only SPN accounts confirmed as KRBTGT and the gMSA
+        (<code>GMSA_SRV$</code>); the ESC1-pattern templates confirmed (USER, CA, SUBCA, OFFLINEROUTER, CROSSCA,
+        DOMAINCONTROLLERAUTHENTICATION, KERBEROSAUTHENTICATION, DOMAINCONTROLLERSERVERAUTH); DC01 confirmed as the
+        only unconstrained-delegation computer.
+      </div>
 
       <h2>1. Setup</h2>
       <h3>1.1 BloodHound CE</h3>
@@ -62,7 +71,7 @@ sudo ./bloodhound-cli install    # UI on http://localhost:8080; save the initial
       <p>
         Unzip <code>Data to ingest in Bloodhound.zip</code> — 13 SharpHound v2.12 JSONs, DCOnly collection for
         <strong>PWRGRID.MGMT</strong>. In the UI: Administration → Data Ingest → File Ingest → upload all 13 → wait for
-        Complete. Sanity check: 35 users, 101 groups, 5 computers (DC01, OFFICE-MAC, DB-SRV, EXCH, AD-CS01).
+        Complete. Sanity check: 35 users, 81 groups, 5 computers (DC01, OFFICE-MAC, DB-SRV, EXCH, AD-CS01).
       </p>
       <h3>1.3 MCP server + Claude Desktop</h3>
       <pre><code>7z x Bloodhound_MCP.7z &amp;&amp; cd BloodHound-MCP-AI-main
@@ -77,7 +86,7 @@ pip install -r requirements.txt    # neo4j, python-dotenv, mcp-server, fastmcp</
 
       <h2>2. Analyst prompts and expected answers (from the actual dataset)</h2>
       <ol class="content-list">
-        <li><strong>Domain overview:</strong> PWRGRID.MGMT — 35 users, 101 groups, 5 computers (AD-CS01 is an enterprise CA).</li>
+        <li><strong>Domain overview:</strong> PWRGRID.MGMT — 35 users, 81 groups, 5 computers (AD-CS01 is an enterprise CA). The ingest also contains a second domain object, <code>PCN.CTRL</code> — worth asking the AI about.</li>
         <li><strong>Domain Admins</strong> (<code>find_all_domain_admins</code>): only built-in ADMINISTRATOR (RID 500) — clean tier zero, so any non-standard path is suspicious.</li>
         <li><strong>Shortest path to DA — the key finding:</strong> <code>EMP_USER@PWRGRID.MGMT</code> has <strong>GenericAll directly on the domain object</strong> = effective DCSync rights → one hop to total compromise (<code>secretsdump.py EMP_USER@dc01 -just-dc</code>). Also note Account Operators → GenericAll on most users (default, but a useful primitive).</li>
         <li><strong>Kerberoastable users:</strong> <em>empty</em> — deliberately. The only SPN account is <code>GMSA_SRV$</code>, a group Managed Service Account (120+ char machine-managed password), which every canned query excludes. Lesson: "no kerberoastable users" ≠ "no SPN accounts" — verify with raw Cypher <code>MATCH (u:User) WHERE u.hasspn=true RETURN u</code>.</li>
